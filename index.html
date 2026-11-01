@@ -1,0 +1,2561 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>绘旅抽卡手账 · 活动卡面与资源统计</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        serif: ['"Noto Serif SC"', 'serif'],
+                        sans: ['"Plus Jakarta Sans"', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'],
+                    },
+                    colors: {
+                        starlight: {
+                            950: '#0d101d',
+                            900: '#15192d',
+                            800: '#202642',
+                        },
+                        cream: {
+                            50: '#fdfbf7',
+                            100: '#f8f3ea',
+                            200: '#efe5d4',
+                            300: '#e3d2b6',
+                        },
+                        gold: {
+                            300: '#ebd197',
+                            400: '#dfb76c',
+                            500: '#c89b48',
+                            600: '#a87b2d',
+                            700: '#825c1c',
+                        },
+                        ink: {
+                            900: '#231f1d',
+                            700: '#4a423d',
+                            500: '#7c7067',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        * {
+            -webkit-tap-highlight-color: transparent;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: radial-gradient(circle at 50% 25%, #232a4a 0%, #121526 60%, #0a0c16 100%);
+            min-height: 100vh;
+            color: #231f1d;
+            overflow-x: hidden;
+        }
+
+        /* 星空背景微粒装饰 */
+        .bg-stars {
+            background-image: 
+                radial-gradient(1.5px 1.5px at 20px 30px, rgba(235, 209, 151, 0.6), rgba(0,0,0,0)),
+                radial-gradient(1px 1px at 90px 40px, rgba(255, 255, 255, 0.5), rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 160px 120px, rgba(223, 183, 108, 0.5), rgba(0,0,0,0)),
+                radial-gradient(1.5px 1.5px at 250px 80px, rgba(255, 255, 255, 0.4), rgba(0,0,0,0));
+            background-repeat: repeat;
+            background-size: 280px 200px;
+        }
+
+        /* 图标呼吸与悬浮动画 */
+        @keyframes floatSlow {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(1deg); }
+        }
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 25px rgba(223, 183, 108, 0.35), 0 0 60px rgba(200, 155, 72, 0.15), inset 0 0 20px rgba(235, 209, 151, 0.3); }
+            50% { box-shadow: 0 0 40px rgba(223, 183, 108, 0.65), 0 0 90px rgba(200, 155, 72, 0.3), inset 0 0 30px rgba(235, 209, 151, 0.5); }
+        }
+        @keyframes spinSlow {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        @keyframes revealDown {
+            from { opacity: 0; transform: translateY(-10px) scale(0.99); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .icon-float {
+            animation: floatSlow 4s ease-in-out infinite;
+        }
+        .icon-glow {
+            animation: pulseGlow 3s ease-in-out infinite;
+        }
+        .ring-spin {
+            animation: spinSlow 28s linear infinite;
+        }
+        .animate-reveal {
+            animation: revealDown 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        /* 手账纸张纹理与边框 */
+        .journal-paper {
+            background-color: #fdfbf7;
+            background-image: radial-gradient(#e5d5bc 0.6px, transparent 0.6px);
+            background-size: 18px 18px;
+            box-shadow: 0 25px 70px -15px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(223, 183, 108, 0.4);
+        }
+
+        /* 已拥有画灵（双卡面合体框）流光边框 */
+        .dual-card-owned {
+            border: 2.5px solid #c89b48;
+            background: linear-gradient(145deg, #fffdf9 0%, #f9f1e1 100%);
+            box-shadow: 0 10px 25px -5px rgba(200, 155, 72, 0.32), 0 0 15px rgba(223, 183, 108, 0.35);
+        }
+        .dual-card-unowned {
+            border: 1.5px dashed #cbbfb0;
+            background-color: #f6f2ea;
+        }
+
+        /* 隐藏数字输入框默认箭头 */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+
+        /* 自定义滚动条 */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(239, 229, 212, 0.4);
+            border-radius: 8px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(200, 155, 72, 0.5);
+            border-radius: 8px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(168, 123, 45, 0.8);
+        }
+    </style>
+</head>
+<body class="bg-stars font-sans antialiased selection:bg-gold-300 selection:text-ink-900">
+
+    <!-- 顶部吐司提示 (替代 alert) -->
+    <div id="toastContainer" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-2 pointer-events-none w-11/12 max-w-sm"></div>
+
+    <!-- ==================== 1. 入口图标模式 (UI是一个图标) ==================== -->
+    <main id="iconView" class="min-h-screen w-full flex flex-col items-center justify-center p-6 transition-all duration-500">
+        
+        <div id="mainAppIconTrigger" role="button" tabindex="0" class="relative flex flex-col items-center group cursor-pointer select-none" onclick="window.openJournalFromIcon()">
+            
+            <!-- 外圈星轨旋转光环 -->
+            <div class="w-56 h-56 sm:w-64 sm:h-64 rounded-full border border-gold-400/30 flex items-center justify-center relative">
+                <svg class="w-full h-full absolute inset-0 ring-spin opacity-60" viewBox="0 0 200 200">
+                    <defs>
+                        <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#ebd197" stop-opacity="0.8"/>
+                            <stop offset="50%" stop-color="#c89b48" stop-opacity="0.1"/>
+                            <stop offset="100%" stop-color="#ebd197" stop-opacity="0.8"/>
+                        </linearGradient>
+                    </defs>
+                    <circle cx="100" cy="100" r="95" fill="none" stroke="url(#ringGrad)" stroke-width="1" stroke-dasharray="6 8"/>
+                    <circle cx="100" cy="5" r="3.5" fill="#ebd197"/>
+                    <circle cx="100" cy="195" r="2.5" fill="#c89b48"/>
+                    <circle cx="5" cy="100" r="2.5" fill="#c89b48"/>
+                    <circle cx="195" cy="100" r="3.5" fill="#ebd197"/>
+                </svg>
+
+                <!-- 核心应用图标本体 -->
+                <div class="icon-float icon-glow w-40 h-40 sm:w-44 sm:h-44 rounded-[2.2rem] bg-gradient-to-br from-[#2a3158] via-[#1c223d] to-[#121629] p-1.5 relative transition-transform duration-300 group-hover:scale-105 active:scale-95">
+                    <!-- 金色内框 -->
+                    <div class="w-full h-full rounded-[1.9rem] border-2 border-gold-400/70 bg-gradient-to-b from-[#252c4f]/90 to-[#14182e]/95 flex flex-col items-center justify-center relative overflow-hidden">
+                        
+                        <!-- 顶部星芒装饰 -->
+                        <div class="absolute -top-8 -right-8 w-24 h-24 bg-gold-400/20 rounded-full blur-xl"></div>
+                        <div class="absolute -bottom-8 -left-8 w-24 h-24 bg-sky-400/15 rounded-full blur-xl"></div>
+
+                        <!-- 绘卷画板 + 颜料 + 钻石 组合矢量图标 -->
+                        <svg class="w-20 h-20 sm:w-22 sm:h-22 drop-shadow-[0_4px_12px_rgba(223,183,108,0.4)]" viewBox="0 0 120 120" fill="none">
+                            <!-- 画板底座 -->
+                            <path d="M24 28C24 21.3726 29.3726 16 36 16H84C90.6274 16 96 21.3726 96 28V88C96 94.6274 90.6274 100 84 100H36C29.3726 100 24 94.6274 24 88V28Z" fill="#FAF5EA" stroke="#DFB76C" stroke-width="3.5"/>
+                            <!-- 画板顶部夹子 -->
+                            <rect x="44" y="10" width="32" height="11" rx="5.5" fill="#C89B48" stroke="#FAF5EA" stroke-width="2"/>
+                            <!-- 卡牌画框线条 -->
+                            <rect x="33" y="29" width="54" height="58" rx="6" fill="#202642" stroke="#DFB76C" stroke-width="2"/>
+                            <!-- 卡面内的星月插画 -->
+                            <circle cx="60" cy="52" r="13" fill="#EBD197" fill-opacity="0.2" stroke="#EBD197" stroke-width="1.5"/>
+                            <path d="M60 36L63.2 46.2L74 49.5L63.2 52.8L60 63L56.8 52.8L46 49.5L56.8 46.2L60 36Z" fill="#EBD197"/>
+                            <!-- 左下角：颜料管/调色盘徽章 -->
+                            <circle cx="34" cy="86" r="15" fill="#2A325A" stroke="#EBD197" stroke-width="2.5"/>
+                            <path d="M28 88C28 82.5 34 76 34 76C34 76 40 82.5 40 88C40 91.3137 37.3137 94 34 94C30.6863 94 28 91.3137 28 88Z" fill="#F472B6"/>
+                            <circle cx="32" cy="86" r="2" fill="#FFF"/>
+                            <!-- 右下角：璀璨钻石徽章 -->
+                            <circle cx="86" cy="86" r="15" fill="#2A325A" stroke="#EBD197" stroke-width="2.5"/>
+                            <polygon points="86,75 95,83 86,96 77,83" fill="#60A5FA" stroke="#E0F2FE" stroke-width="1.5"/>
+                            <polyline points="77,83 95,83" stroke="#E0F2FE" stroke-width="1.2"/>
+                            <polyline points="82,75 86,83 90,75" stroke="#E0F2FE" stroke-width="1.2"/>
+                        </svg>
+
+                        <!-- 图标内小字 -->
+                        <span class="mt-1.5 text-[11px] font-serif tracking-widest text-gold-300 font-semibold">绘旅手账</span>
+                    </div>
+
+                    <!-- 右上角总记录角标 -->
+                    <div id="iconEventCountBadge" class="absolute -top-2 -right-2 bg-gradient-to-r from-amber-500 to-gold-600 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-lg border border-cream-50 flex items-center gap-1">
+                        <i class="fa-solid fa-sparkles text-[10px]"></i>
+                        <span id="iconBadgeText">1 活动</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 图标下方标题与呼吸提示 -->
+            <div class="mt-6 text-center">
+                <h1 class="text-xl sm:text-2xl font-serif font-bold text-cream-100 tracking-wider flex items-center justify-center gap-2">
+                    <span class="text-gold-400">✦</span> 抽卡统计手账 <span class="text-gold-400">✦</span>
+                </h1>
+                <button type="button" onclick="event.stopPropagation(); window.openJournalFromIcon();" class="mt-2.5 text-xs sm:text-sm text-gold-300 bg-white/10 hover:bg-gold-400/25 border border-gold-400/40 rounded-full px-5 py-2 backdrop-blur-sm inline-flex items-center gap-2 transition-all shadow-md active:scale-95 cursor-pointer">
+                    <i class="fa-regular fa-hand-pointer animate-bounce"></i>
+                    <span>点击图标 · 立即进入手账</span>
+                </button>
+            </div>
+
+            <!-- 路径流程预览提示 -->
+            <div class="mt-7 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 text-[11px] text-cream-200/60 max-w-lg text-center px-3">
+                <span class="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10">① 点击年份出月份</span>
+                <i class="fa-solid fa-angle-right text-gold-400/50"></i>
+                <span class="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10">② 点击月份进当月专属页</span>
+                <i class="fa-solid fa-angle-right text-gold-400/50"></i>
+                <span class="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10">③ 点击活动名称进双卡面&资源专属页</span>
+            </div>
+        </div>
+
+        <!-- 底部应急入口与缓存修复按钮 -->
+        <div class="mt-6 flex items-center gap-4 text-[11px] text-cream-200/50">
+            <button type="button" onclick="window.openJournalFromIcon()" class="underline hover:text-gold-300 transition">直接展开主界面</button>
+            <span>·</span>
+            <button type="button" onclick="window.emergencyRepairData()" class="underline hover:text-amber-300 transition">修复/重置本地缓存</button>
+        </div>
+
+    </main>
+
+    <!-- ==================== 2. 展开后的主手账容器（内部包含3个独立切换的专属页面） ==================== -->
+    <div id="journalView" class="hidden min-h-screen w-full py-4 sm:py-8 px-2.5 sm:px-6 flex flex-col items-center justify-start">
+        
+        <!-- 手账本主体容器 -->
+        <div class="journal-paper w-full max-w-4xl rounded-3xl overflow-hidden border-2 border-gold-400/60 animate-reveal">
+            
+            <!-- 手账顶部鎏金标题栏 -->
+            <header class="bg-gradient-to-r from-[#1b2038] via-[#252c4a] to-[#1b2038] text-cream-50 px-4 sm:px-7 py-4 border-b-2 border-gold-400/60 flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <!-- 迷你会呼吸小图标 (点击也可缩回图标模式) -->
+                    <button onclick="minimizeToIcon()" title="点击缩回桌面图标" class="w-10 h-10 rounded-xl bg-gradient-to-br from-gold-400 to-gold-600 p-0.5 shadow-md hover:scale-105 active:scale-95 transition-transform flex-shrink-0">
+                        <div class="w-full h-full bg-[#1b2038] rounded-[10px] flex items-center justify-center text-gold-300">
+                            <i class="fa-solid fa-palette text-base"></i>
+                        </div>
+                    </button>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h2 class="font-serif font-bold text-base sm:text-lg tracking-wide text-cream-50">绘旅人抽卡档案手账</h2>
+                            <span class="hidden sm:inline-block text-[10px] bg-gold-500/20 border border-gold-400/40 text-gold-300 px-2 py-0.5 rounded-full">自动保存</span>
+                        </div>
+                        <!-- 顶部当前所在层级面包屑 -->
+                        <div id="headerBreadcrumb" class="text-[11px] text-cream-200/80 flex items-center gap-1.5 mt-0.5">
+                            <span>年月总览</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 右侧工具按钮组：快速演示 / 备份 / 缩回图标 -->
+                <div class="flex items-center gap-2 ml-auto">
+                    <button onclick="quickJumpToSample()" class="text-xs px-2.5 py-1.5 rounded-xl bg-gold-500/20 hover:bg-gold-500/35 text-gold-300 border border-gold-400/40 transition flex items-center gap-1.5" title="体验示例：进入2026年10月专属页面">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        <span class="hidden sm:inline">示例10月页</span>
+                    </button>
+                    <button onclick="openBackupModal()" class="text-xs px-2.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-cream-100 border border-white/15 transition flex items-center gap-1.5" title="导出或导入数据备份">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        <span>备份</span>
+                    </button>
+                    <button onclick="minimizeToIcon()" class="text-xs px-3 py-1.5 rounded-xl bg-gradient-to-r from-gold-400 to-gold-500 text-ink-900 font-semibold shadow hover:brightness-105 active:scale-95 transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-compress"></i>
+                        <span>缩回图标</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- 手账正文内容区：包含三个严格独立的页面视图 -->
+            <div class="p-4 sm:p-7 min-h-[480px] flex flex-col justify-between">
+
+                <!-- =======================================================================
+                     【页面 1】年份与月份选择页（点击年份出现月份，点击月份进入月份专属页面）
+                     ======================================================================= -->
+                <section id="pageYearMonth" class="space-y-6 animate-reveal">
+                    <div class="bg-cream-100/90 border border-gold-400/40 rounded-2xl p-4 sm:p-6 shadow-sm">
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                            <div class="flex items-center gap-2">
+                                <span class="w-6 h-6 rounded-full bg-ink-900 text-gold-300 text-xs font-bold flex items-center justify-center">1</span>
+                                <h3 class="font-serif font-bold text-ink-900 text-base sm:text-lg">选择年份</h3>
+                                <span class="text-xs text-ink-500">（点击年份展开 1~12 月份）</span>
+                            </div>
+                            <button onclick="openAddYearModal()" class="text-xs font-medium px-3.5 py-1.5 rounded-xl bg-white hover:bg-gold-300/20 text-ink-700 border border-gold-400/50 transition flex items-center gap-1.5 shadow-sm">
+                                <i class="fa-solid fa-plus text-gold-600"></i>
+                                <span>添加年份</span>
+                            </button>
+                        </div>
+
+                        <!-- 年份胶囊列表 -->
+                        <div id="yearListContainer" class="flex flex-wrap items-center gap-2.5">
+                            <!-- 由 JS 动态渲染 -->
+                        </div>
+
+                        <!-- 点击年份后出现的月份网格（点击任意月份将直接跳转进入【页面2：月份专属页】） -->
+                        <div id="monthSectionWrapper" class="hidden mt-6 pt-5 border-t border-dashed border-gold-400/50 animate-reveal">
+                            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-6 h-6 rounded-full bg-gold-600 text-white text-xs font-bold flex items-center justify-center">2</span>
+                                    <h4 class="font-serif font-bold text-ink-900 text-sm sm:text-base">
+                                        <span id="currentYearTitle" class="text-gold-700">2026年</span> · 点击月份进入当月专属页
+                                    </h4>
+                                </div>
+                                <span class="text-[11px] text-gold-700 bg-gold-300/25 px-2.5 py-0.5 rounded-full border border-gold-400/40">
+                                    <i class="fa-solid fa-circle text-[7px] text-amber-600 mr-1 align-middle"></i>点击月份进入当月活动页
+                                </span>
+                            </div>
+
+                            <!-- 年份页男主快捷筛选栏（方便一眼看出哪个月有对应男主的活动） -->
+                            <div class="mb-3.5 flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+                                <span class="text-[11px] text-ink-500 flex-shrink-0 mr-1"><i class="fa-solid fa-filter text-gold-600 mr-1"></i>按男主看月份：</span>
+                                <div id="yearPageLeadFilterBar" class="flex items-center gap-1.5 flex-nowrap">
+                                    <!-- 由 JS 动态渲染 -->
+                                </div>
+                            </div>
+
+                            <!-- 1月 - 12月 网格 -->
+                            <div id="monthGridContainer" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2.5 sm:gap-3">
+                                <!-- 由 JS 动态渲染 -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- =======================================================================
+                     【页面 2】月份专属页面（展示当月所有活动图片、自定义几号-几号、男主筛选、点击活动名进活动专属页）
+                     ======================================================================= -->
+                <section id="pageMonthDetail" class="hidden space-y-4 animate-reveal">
+                    <!-- 月份页顶部导航栏（优化移动端排版，避免标题单字换行） -->
+                    <div class="bg-gradient-to-r from-[#212746] via-[#2b335a] to-[#212746] text-cream-50 p-4 sm:p-5 rounded-2xl border border-gold-400/60 shadow-md space-y-3">
+                        <div class="flex items-center justify-between gap-2">
+                            <button onclick="backToYearMonthPage()" class="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-gold-300 border border-gold-400/30 text-xs font-semibold transition inline-flex items-center gap-1.5 flex-shrink-0">
+                                <i class="fa-solid fa-arrow-left"></i>
+                                <span>返回年月</span>
+                            </button>
+
+                            <button onclick="openEventModal()" class="text-xs sm:text-sm font-semibold px-3.5 py-2 rounded-xl bg-gradient-to-r from-gold-400 to-amber-500 text-ink-900 shadow-md hover:brightness-105 active:scale-95 transition inline-flex items-center gap-1.5 flex-shrink-0">
+                                <i class="fa-solid fa-plus"></i>
+                                <span>添加本月活动</span>
+                            </button>
+                        </div>
+
+                        <div class="pt-1 border-t border-white/10">
+                            <h3 id="monthPageHeading" class="font-serif font-bold text-lg sm:text-xl text-gold-300 tracking-wide">2026年 · 10月 活动一览</h3>
+                            <p class="text-[11px] text-cream-200/75 mt-0.5">点击下方【活动名称】即可进入该活动的卡面与资源统计专属页面</p>
+                        </div>
+                    </div>
+
+                    <!-- 月份专属页：男主筛选栏 -->
+                    <div class="bg-cream-100/95 border border-gold-400/50 rounded-2xl p-3 flex flex-wrap items-center gap-2 shadow-2xs">
+                        <span class="text-xs font-serif font-bold text-ink-700 flex items-center gap-1 mr-1">
+                            <i class="fa-solid fa-user-tag text-gold-600"></i>
+                            <span>男主筛选：</span>
+                        </span>
+                        <div id="monthLeadFilterContainer" class="flex flex-wrap items-center gap-1.5 flex-1">
+                            <!-- 由 JS 动态渲染：全部 | 艾因 | 路辰 | 罗夏 | 司岚 | 叶瑄 | 混池/多人 -->
+                        </div>
+                    </div>
+
+                    <!-- 当月活动卡片列表 -->
+                    <div id="monthEventListContainer" class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <!-- 由 JS 动态渲染当月每个活动卡片（含活动图、男主标签、几号-几号日期标签、可点击的活动名称） -->
+                    </div>
+                </section>
+
+                <!-- =======================================================================
+                     【页面 3】活动专属页面（绘旅人双卡面合体画廊 + 6行资源与氪金明细账单）
+                     ======================================================================= -->
+                <section id="pageEventDetail" class="hidden space-y-6 animate-reveal">
+                    <!-- 活动专属页顶部导航与概览横幅 -->
+                    <div class="rounded-2xl overflow-hidden border-2 border-gold-400/70 bg-[#1a1f38] shadow-lg">
+                        <!-- 顶部返回栏 -->
+                        <div class="px-4 sm:px-6 py-3 bg-black/35 border-b border-gold-400/30 flex flex-wrap items-center justify-between gap-2">
+                            <div class="flex items-center gap-2">
+                                <button onclick="backToMonthPage()" class="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-gold-300 border border-gold-400/30 text-xs font-semibold transition flex items-center gap-1.5">
+                                    <i class="fa-solid fa-arrow-left"></i>
+                                    <span id="backToMonthBtnText">返回 10月活动页</span>
+                                </button>
+                                <button onclick="backToYearMonthPage()" class="px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/15 text-cream-200/80 text-xs transition hidden sm:inline-flex items-center gap-1">
+                                    <i class="fa-regular fa-calendar"></i>
+                                    <span>年月页</span>
+                                </button>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <button onclick="openEditCurrentEventModal()" class="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-cream-100 text-xs border border-white/15 transition flex items-center gap-1">
+                                    <i class="fa-solid fa-pen-to-square text-gold-300"></i>
+                                    <span>修改活动/男主/日期/封面</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 活动封面缩略展示与标题日期横幅 -->
+                        <div class="relative p-4 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-gradient-to-r from-[#1b203a] via-[#272f54] to-[#1b203a]">
+                            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full min-w-0">
+                                <!-- 活动小封面（点击原生label可直接换图） -->
+                                <label for="replaceBannerFileInput" class="cursor-pointer group relative w-full sm:w-44 h-28 rounded-xl overflow-hidden border border-gold-400/60 flex-shrink-0 bg-black/40 shadow block">
+                                    <img id="eventDetailBannerImg" src="" alt="活动图片" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                                    <div class="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 active:opacity-100 transition flex items-center justify-center text-[11px] text-gold-300 font-medium">
+                                        <i class="fa-solid fa-camera mr-1"></i>点击更换活动图
+                                    </div>
+                                </label>
+
+                                <!-- 男主徽章 + 活动日期徽章 + 活动名称 -->
+                                <div class="space-y-2 flex-1 min-w-0 w-full">
+                                    <div class="flex flex-wrap items-center gap-1.5">
+                                        <div id="eventDetailLeadBadges" class="flex flex-wrap items-center gap-1.5"></div>
+                                        <div class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-gold-500/20 border border-gold-400/50 text-gold-300 text-xs font-semibold">
+                                            <i class="fa-regular fa-clock"></i>
+                                            <span id="eventDetailDateRange">10月31日 - 11月7日</span>
+                                        </div>
+                                    </div>
+                                    <h3 id="eventDetailTitle" class="font-serif font-bold text-lg sm:text-2xl text-cream-50 tracking-wide break-words">活动名称</h3>
+                                    <p class="text-xs text-cream-200/70">绘旅人双卡面画灵图鉴（一段突破前 + 二段突破后合体展示）与本期资源氪金账单</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ==================== (A) 绘旅人专属「双卡面为一卡」画灵展厅 ==================== -->
+                    <div class="bg-cream-100/90 border-2 border-gold-400/50 rounded-2xl p-4 sm:p-6 shadow-sm space-y-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-gold-400/30">
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <i class="fa-solid fa-images text-gold-600 text-base"></i>
+                                    <h4 class="font-serif font-bold text-ink-900 text-base sm:text-lg">本期活动画灵卡面（两张卡面为一张卡）</h4>
+                                </div>
+                                <p class="text-xs text-ink-500 mt-0.5">每张画灵包含【一段卡面】与【二段卡面】，共用同一个「★ 已拥有」开关；点击单张卡面可放大或单独换图</p>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <!-- 切换横版/竖版卡面比例按钮 -->
+                                <button onclick="toggleCardAspectMode()" id="aspectToggleBtn" class="text-xs px-3 py-2 rounded-xl bg-white hover:bg-cream-200 text-ink-700 border border-gold-400/50 transition flex items-center gap-1.5 shadow-2xs" title="切换横版或竖版画灵框比例">
+                                    <i class="fa-solid fa-crop-simple text-gold-600"></i>
+                                    <span id="aspectToggleText">比例：横版卡面</span>
+                                </button>
+                                <!-- 上传新增一张双卡面画灵 -->
+                                <button onclick="openAddCardModal()" class="text-xs sm:text-sm font-semibold px-4 py-2 rounded-xl bg-gradient-to-r from-[#1f2544] to-[#2c345c] text-gold-300 border border-gold-400/60 shadow hover:brightness-110 active:scale-95 transition flex items-center gap-1.5">
+                                    <i class="fa-solid fa-plus"></i>
+                                    <span>新增画灵（双卡面）</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 顶部汇总：显示我拥有了哪张卡 -->
+                        <div id="ownedSummaryBanner" class="p-3.5 rounded-xl bg-gradient-to-r from-amber-500/15 via-gold-300/20 to-amber-500/15 border border-gold-400/60 flex flex-wrap items-center justify-between gap-2">
+                            <!-- 由 JS 动态填充 -->
+                        </div>
+
+                        <!-- 双卡面画灵网格容器 -->
+                        <div id="dualCardGridContainer" class="grid grid-cols-1 gap-5">
+                            <!-- 由 JS 动态渲染每张双卡面合体画灵 -->
+                        </div>
+                    </div>
+
+                    <!-- ==================== (B) 本期活动 6 行资源与氪金明细账单 ==================== -->
+                    <div id="eventResourceLedgerContainer" class="rounded-2xl bg-gradient-to-br from-[#191e35] via-[#222946] to-[#161a2e] text-cream-50 p-4 sm:p-6 border-2 border-gold-400/70 shadow-xl">
+                        <!-- 由 JS 动态渲染 6 行资源与氪金统计 -->
+                    </div>
+                </section>
+
+            </div>
+
+            <!-- 手账底部页脚说明 -->
+            <footer class="bg-cream-200/60 px-6 py-3.5 border-t border-gold-400/30 flex flex-wrap items-center justify-between gap-2 text-xs text-ink-500">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-shield-heart text-gold-600"></i>
+                    <span>所有上传的活动图片、双卡面画灵与资源氪金账单均保存在本地浏览器中，刷新不丢失。</span>
+                </div>
+                <button onclick="resetToDefaultSample()" class="text-ink-500 hover:text-red-600 underline transition">
+                    恢复初始示例数据
+                </button>
+            </footer>
+
+        </div>
+    </div>
+
+    <!-- ==================== 弹窗1：添加年份 ==================== -->
+    <div id="addYearModal" class="hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-cream-50 border-2 border-gold-400 rounded-2xl w-full max-w-xs p-5 shadow-2xl animate-reveal">
+            <div class="flex items-center justify-between pb-3 border-b border-gold-300/50">
+                <h3 class="font-serif font-bold text-base text-ink-900">添加新年份</h3>
+                <button onclick="closeModal('addYearModal')" class="text-ink-500 hover:text-ink-900 w-7 h-7 rounded-full flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="mt-4">
+                <label class="block text-xs font-semibold text-ink-700 mb-1.5">请输入四位数字年份</label>
+                <input id="newYearInput" type="number" placeholder="例如：2027" min="2015" max="2099" class="w-full px-3.5 py-2.5 rounded-xl bg-white border border-gold-400/60 text-ink-900 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-gold-500">
+            </div>
+            <div class="mt-5 flex justify-end gap-2">
+                <button onclick="closeModal('addYearModal')" class="px-4 py-2 rounded-xl text-xs font-medium text-ink-700 bg-cream-200 hover:bg-cream-300 transition">取消</button>
+                <button onclick="confirmAddYear()" class="px-4 py-2 rounded-xl text-xs font-semibold text-gold-300 bg-ink-900 hover:bg-ink-700 transition">确认添加</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 弹窗2：新增/编辑活动（含所属男主、活动名称、几号-几号自定义日期、活动图片） ==================== -->
+    <div id="eventModal" class="hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-cream-50 border-2 border-gold-400 rounded-2xl w-full max-w-md p-5 shadow-2xl animate-reveal my-auto max-h-[92vh] overflow-y-auto">
+            <div class="flex items-center justify-between pb-3 border-b border-gold-300/50">
+                <h3 id="eventModalTitle" class="font-serif font-bold text-base text-ink-900">添加本月活动</h3>
+                <button onclick="closeModal('eventModal')" class="text-ink-500 hover:text-ink-900 w-7 h-7 rounded-full flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="mt-4 space-y-4">
+                <!-- 1. 活动所属男主选择（支持单选或多选，不用再把男主名字写进活动名里） -->
+                <div class="bg-cream-100 p-3.5 rounded-xl border border-gold-400/50 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <label class="block text-xs font-semibold text-ink-900">
+                            <i class="fa-solid fa-crown text-gold-600 mr-1"></i>活动所属男主 <span class="text-red-500">*</span>
+                        </label>
+                        <span class="text-[11px] text-ink-500">可点选1位或多位</span>
+                    </div>
+                    <div id="modalLeadSelectContainer" class="grid grid-cols-3 gap-2">
+                        <!-- 由 JS 渲染：艾因、路辰、罗夏、司岚、叶瑄、混池/多人 -->
+                    </div>
+                </div>
+
+                <!-- 2. 活动名称输入 -->
+                <div>
+                    <label class="block text-xs font-semibold text-ink-700 mb-1.5">活动名称 <span class="text-red-500">*</span></label>
+                    <input id="modalEventNameInput" type="text" placeholder="例如：怪谈：时融 / 万圣奇幻夜" class="w-full px-3.5 py-2.5 rounded-xl bg-white border border-gold-400/60 text-ink-900 text-sm focus:outline-none focus:ring-2 focus:ring-gold-500">
+                    <p class="text-[11px] text-ink-500 mt-1">上方已选男主会自动生成专属名字标签，活动名无需重复输入男主名字</p>
+                </div>
+
+                <!-- 3. 活动自定义日期（几号 - 几号） -->
+                <div class="bg-cream-100 p-3.5 rounded-xl border border-gold-400/50 space-y-2.5">
+                    <label class="block text-xs font-semibold text-ink-900">
+                        <i class="fa-regular fa-calendar-days text-gold-600 mr-1"></i>活动日期（几号 - 几号） <span class="text-red-500">*</span>
+                    </label>
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <div>
+                            <span class="text-[11px] text-ink-500 block mb-1">开始日期</span>
+                            <input id="modalStartDayInput" type="text" placeholder="如：10月31日" class="w-full px-3 py-2 rounded-lg bg-white border border-gold-400/60 text-ink-900 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-gold-500">
+                        </div>
+                        <div>
+                            <span class="text-[11px] text-ink-500 block mb-1">结束日期</span>
+                            <input id="modalEndDayInput" type="text" placeholder="如：11月7日" class="w-full px-3 py-2 rounded-lg bg-white border border-gold-400/60 text-ink-900 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-gold-500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. 自己上传的活动图片（使用原生 label 绑定，彻底解决手机浏览器点击上传失败） -->
+                <div>
+                    <label class="block text-xs font-semibold text-ink-700 mb-1.5">活动图片（自己上传的活动宣传图/横幅）</label>
+                    <label for="modalEventBannerInput" class="cursor-pointer group relative w-full h-36 rounded-xl border-2 border-dashed border-gold-400/70 bg-cream-100 hover:bg-gold-300/15 transition flex flex-col items-center justify-center overflow-hidden">
+                        <img id="modalBannerPreview" src="" alt="预览" class="hidden w-full h-full object-cover">
+                        <div id="modalBannerPlaceholder" class="flex flex-col items-center text-ink-500 group-hover:text-gold-700 p-3 text-center">
+                            <i class="fa-regular fa-image text-2xl mb-1 text-gold-600"></i>
+                            <span class="text-xs font-medium text-ink-900">点击从相册选择活动图片</span>
+                            <span class="text-[11px] text-ink-500/70 mt-0.5">支持任意手机截图/相册原图；若暂不上传将使用星空绘卷背景</span>
+                        </div>
+                    </label>
+                    <input id="modalEventBannerInput" type="file" accept="image/*" class="hidden" onchange="handleModalBannerSelect(event)">
+                </div>
+            </div>
+
+            <div class="mt-6 flex justify-end gap-2">
+                <button onclick="closeModal('eventModal')" class="px-4 py-2 rounded-xl text-xs font-medium text-ink-700 bg-cream-200 hover:bg-cream-300 transition">取消</button>
+                <button onclick="confirmSaveEvent()" class="px-5 py-2 rounded-xl text-xs font-semibold text-gold-300 bg-ink-900 hover:bg-ink-700 transition shadow">保存活动</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 弹窗3：新增绘旅人双卡面画灵（两张卡面为一张卡） ==================== -->
+    <div id="addCardModal" class="hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-cream-50 border-2 border-gold-400 rounded-2xl w-full max-w-lg p-5 shadow-2xl animate-reveal my-auto max-h-[92vh] overflow-y-auto">
+            <div class="flex items-center justify-between pb-3 border-b border-gold-300/50">
+                <div>
+                    <h3 class="font-serif font-bold text-base text-ink-900">新增本期画灵（两张卡面为一张卡）</h3>
+                    <p class="text-[11px] text-ink-500 mt-0.5">一张画灵包含「一段卡面」与「二段卡面」，共用一个拥有状态</p>
+                </div>
+                <button onclick="closeModal('addCardModal')" class="text-ink-500 hover:text-ink-900 w-7 h-7 rounded-full flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="mt-4 space-y-4">
+                <!-- 快捷方式：一次选2张图片自动填入一段和二段（原生label触发） -->
+                <div class="flex items-center justify-between bg-amber-500/10 border border-gold-400/50 rounded-xl px-3.5 py-2.5 gap-2">
+                    <span class="text-xs text-ink-900 font-medium">
+                        <i class="fa-solid fa-bolt text-amber-600 mr-1"></i>快捷上传：可一次勾选 2 张图自动填入一、二段
+                    </span>
+                    <label for="modalBatchTwoInput" class="cursor-pointer px-3 py-1.5 rounded-lg bg-ink-900 text-gold-300 text-xs font-semibold hover:bg-ink-700 transition flex-shrink-0">
+                        一次选2张
+                    </label>
+                    <input id="modalBatchTwoInput" type="file" accept="image/*" multiple class="hidden" onchange="handleBatchTwoCardSelect(event)">
+                </div>
+
+                <!-- 左右并排上传槽位：左（一段卡面/突破前） + 右（二段卡面/突破后） -->
+                <div class="grid grid-cols-2 gap-3">
+                    <!-- 一段卡面 -->
+                    <div class="space-y-1.5">
+                        <span class="block text-xs font-serif font-bold text-ink-900 text-center">
+                            <span class="px-2 py-0.5 rounded bg-gold-300/40 text-gold-700">一段卡面（突破前）</span>
+                        </span>
+                        <label for="modalCardImg1Input" class="cursor-pointer group relative aspect-[16/10] sm:aspect-[4/3] w-full rounded-xl border-2 border-dashed border-gold-400/70 bg-cream-100 hover:bg-gold-300/15 transition flex flex-col items-center justify-center overflow-hidden">
+                            <img id="modalCardImg1Preview" src="" class="hidden w-full h-full object-cover">
+                            <div id="modalCardImg1Placeholder" class="flex flex-col items-center text-ink-500 p-2 text-center">
+                                <i class="fa-regular fa-image text-xl mb-1 text-gold-600"></i>
+                                <span class="text-xs font-medium text-ink-900">点击上传一段卡面</span>
+                            </div>
+                        </label>
+                        <input id="modalCardImg1Input" type="file" accept="image/*" class="hidden" onchange="handleSingleSlotSelect(event, 1)">
+                    </div>
+
+                    <!-- 二段卡面 -->
+                    <div class="space-y-1.5">
+                        <span class="block text-xs font-serif font-bold text-ink-900 text-center">
+                            <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-800">二段卡面（突破后）</span>
+                        </span>
+                        <label for="modalCardImg2Input" class="cursor-pointer group relative aspect-[16/10] sm:aspect-[4/3] w-full rounded-xl border-2 border-dashed border-gold-400/70 bg-cream-100 hover:bg-gold-300/15 transition flex flex-col items-center justify-center overflow-hidden">
+                            <img id="modalCardImg2Preview" src="" class="hidden w-full h-full object-cover">
+                            <div id="modalCardImg2Placeholder" class="flex flex-col items-center text-ink-500 p-2 text-center">
+                                <i class="fa-regular fa-image text-xl mb-1 text-amber-600"></i>
+                                <span class="text-xs font-medium text-ink-900">点击上传二段卡面</span>
+                            </div>
+                        </label>
+                        <input id="modalCardImg2Input" type="file" accept="image/*" class="hidden" onchange="handleSingleSlotSelect(event, 2)">
+                    </div>
+                </div>
+
+                <!-- 画灵所属男主 & 画灵名称 & 整卡拥有状态 -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                    <div>
+                        <label class="block text-xs font-semibold text-ink-700 mb-1">画灵所属男主</label>
+                        <select id="modalCardLeadSelect" class="w-full px-3 py-2 rounded-xl bg-white border border-gold-400/60 text-ink-900 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-gold-500">
+                            <option value="叶瑄">叶瑄</option>
+                            <option value="艾因">艾因</option>
+                            <option value="路辰">路辰</option>
+                            <option value="罗夏">罗夏</option>
+                            <option value="司岚">司岚</option>
+                            <option value="混池/多人">其他/多人</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-ink-700 mb-1">画灵卡名</label>
+                        <input id="modalCardNameInput" type="text" placeholder="如：时融 / 深海回响" class="w-full px-3 py-2 rounded-xl bg-white border border-gold-400/60 text-ink-900 text-xs focus:outline-none focus:ring-2 focus:ring-gold-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-ink-700 mb-1">这张卡是否已拥有</label>
+                        <select id="modalCardOwnedSelect" class="w-full px-3 py-2 rounded-xl bg-white border border-gold-400/60 text-ink-900 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-gold-500">
+                            <option value="true">★ 已拥有这张画灵</option>
+                            <option value="false">未拥有</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6 flex justify-end gap-2">
+                <button onclick="closeModal('addCardModal')" class="px-4 py-2 rounded-xl text-xs font-medium text-ink-700 bg-cream-200 hover:bg-cream-300 transition">取消</button>
+                <button onclick="confirmAddDualCard()" class="px-5 py-2 rounded-xl text-xs font-semibold text-gold-300 bg-ink-900 hover:bg-ink-700 transition shadow">确认添加画灵</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 弹窗4：数据备份（导出/导入） ==================== -->
+    <div id="backupModal" class="hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-cream-50 border-2 border-gold-400 rounded-2xl w-full max-w-md p-5 shadow-2xl animate-reveal">
+            <div class="flex items-center justify-between pb-3 border-b border-gold-300/50">
+                <h3 class="font-serif font-bold text-base text-ink-900">手账数据备份与恢复</h3>
+                <button onclick="closeModal('backupModal')" class="text-ink-500 hover:text-ink-900 w-7 h-7 rounded-full flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="mt-4 space-y-3 text-xs text-ink-700">
+                <p>您可以将包含所有活动图片、卡面与资源统计的手账打包导出为 <code class="bg-cream-200 px-1.5 py-0.5 rounded">.json</code> 备份文件，方便跨设备迁移或永久珍藏。</p>
+                <div class="grid grid-cols-2 gap-3 pt-2">
+                    <button onclick="exportBackupFile()" class="p-3.5 rounded-xl bg-ink-900 text-gold-300 hover:bg-ink-700 transition flex flex-col items-center justify-center gap-1.5 font-semibold shadow">
+                        <i class="fa-solid fa-download text-lg"></i>
+                        <span>导出备份文件</span>
+                    </button>
+                    <button onclick="document.getElementById('importBackupInput').click()" class="p-3.5 rounded-xl bg-white border border-gold-400 text-ink-900 hover:bg-cream-200 transition flex flex-col items-center justify-center gap-1.5 font-semibold shadow-sm">
+                        <i class="fa-solid fa-upload text-lg text-gold-600"></i>
+                        <span>导入备份文件</span>
+                    </button>
+                    <input id="importBackupInput" type="file" accept=".json" class="hidden" onchange="importBackupFile(event)">
+                </div>
+            </div>
+            <div class="mt-5 flex justify-end">
+                <button onclick="closeModal('backupModal')" class="px-4 py-1.5 rounded-xl text-xs font-medium text-ink-700 bg-cream-200 hover:bg-cream-300 transition">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 弹窗5：通用确认弹窗 (替代 confirm) ==================== -->
+    <div id="confirmModal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-cream-50 border-2 border-gold-400 rounded-2xl w-full max-w-xs p-5 shadow-2xl animate-reveal text-center">
+            <div class="w-10 h-10 rounded-full bg-amber-500/15 text-amber-600 mx-auto flex items-center justify-center mb-3">
+                <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+            </div>
+            <h4 id="confirmModalTitle" class="font-serif font-bold text-sm text-ink-900">确认操作</h4>
+            <p id="confirmModalDesc" class="mt-1.5 text-xs text-ink-500 leading-relaxed">确定要执行此操作吗？</p>
+            <div class="mt-5 flex justify-center gap-2.5">
+                <button onclick="closeModal('confirmModal')" class="flex-1 py-2 rounded-xl text-xs font-medium text-ink-700 bg-cream-200 hover:bg-cream-300 transition">取消</button>
+                <button id="confirmModalOkBtn" class="flex-1 py-2 rounded-xl text-xs font-semibold text-white bg-red-600 hover:bg-red-700 transition">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 弹窗6：卡面大图预览弹窗 ==================== -->
+    <div id="imageLightbox" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex flex-col items-center justify-center p-4" onclick="closeModal('imageLightbox')">
+        <img id="lightboxImg" src="" alt="卡面预览" class="max-w-full max-h-[80vh] rounded-2xl border-2 border-gold-400 shadow-2xl object-contain">
+        <p id="lightboxCaption" class="mt-3 font-serif text-sm text-gold-300 font-semibold tracking-wider"></p>
+        <span class="mt-1 text-xs text-white/50">点击任意处关闭预览</span>
+    </div>
+
+    <!-- 隐藏的单图替换文件选择器 -->
+    <input id="replaceBannerFileInput" type="file" accept="image/*" class="hidden" onchange="handleDirectBannerReplace(event)">
+    <input id="replaceCardFileInput" type="file" accept="image/*" class="hidden" onchange="handleDirectCardReplace(event)">
+
+    <script>
+        /* ============================================================================
+         * 零、全局导航快速保底注册 & 《时空中的绘旅人》男主配置表
+         * ============================================================================ */
+        const MALE_LEADS = [
+            { id: '艾因', name: '艾因', color: '#c84b56', bgLight: 'rgba(200, 75, 86, 0.18)', border: '#e06c76', textLight: '#ffd6d9' },
+            { id: '路辰', name: '路辰', color: '#3b82f6', bgLight: 'rgba(59, 130, 246, 0.18)', border: '#60a5fa', textLight: '#dbeafe' },
+            { id: '罗夏', name: '罗夏', color: '#d97706', bgLight: 'rgba(217, 119, 6, 0.20)', border: '#f59e0b', textLight: '#fef3c7' },
+            { id: '司岚', name: '司岚', color: '#0d9488', bgLight: 'rgba(13, 148, 136, 0.20)', border: '#2dd4bf', textLight: '#ccfbf1' },
+            { id: '叶瑄', name: '叶瑄', color: '#7c5cbf', bgLight: 'rgba(124, 92, 191, 0.22)', border: '#a78bfa', textLight: '#ede9fe' },
+            { id: '混池/多人', name: '混池/多人', color: '#b8862d', bgLight: 'rgba(200, 155, 72, 0.22)', border: '#dfb76c', textLight: '#fef08a' }
+        ];
+
+        function getLeadMeta(leadName) {
+            return MALE_LEADS.find(l => l.id === leadName) || MALE_LEADS[5];
+        }
+
+        // 生成男主徽章 HTML
+        function renderLeadBadgesHtml(leadsArray, size = 'sm') {
+            const list = Array.isArray(leadsArray) && leadsArray.length > 0 ? leadsArray : ['混池/多人'];
+            return list.map(leadName => {
+                const m = getLeadMeta(leadName);
+                const padClass = size === 'xs' ? 'px-1.5 py-0.2 text-[10px]' : 'px-2.5 py-0.5 text-xs';
+                return `<span class="inline-flex items-center gap-1 rounded-full font-serif font-bold shadow-2xs flex-shrink-0 ${padClass}" style="background:${m.color}; color:#fff; border:1px solid ${m.border};">
+                    <span>${escapeHtml(m.name)}</span>
+                </span>`;
+            }).join('');
+        }
+
+        /* ============================================================================
+         * 一、唯美绘本风 SVG 示例图片生成器（无裁切风险的纯装饰画卷底图）
+         * ============================================================================ */
+        function createSampleBannerSVG(title, dateStr, leadName = '叶瑄') {
+            const meta = getLeadMeta(leadName);
+            const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 360" width="800" height="360" preserveAspectRatio="xMidYMid slice">
+                <defs>
+                    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#151931"/>
+                        <stop offset="50%" stop-color="${meta.color}" stop-opacity="0.55"/>
+                        <stop offset="100%" stop-color="#12172b"/>
+                    </linearGradient>
+                </defs>
+                <rect width="800" height="360" fill="#14182e"/>
+                <rect width="800" height="360" fill="url(#bg)"/>
+                <circle cx="400" cy="180" r="145" fill="${meta.color}" fill-opacity="0.16"/>
+                <circle cx="400" cy="180" r="115" fill="none" stroke="#ebd197" stroke-opacity="0.35" stroke-width="1.5" stroke-dasharray="6 6"/>
+                <circle cx="400" cy="180" r="82" fill="none" stroke="#ebd197" stroke-opacity="0.25" stroke-width="1"/>
+                <path d="M0 290 Q 250 235 480 295 T 800 265 L 800 360 L 0 360 Z" fill="#0d1021" fill-opacity="0.75"/>
+                <path d="M400 75 L408 104 L437 112 L408 120 L400 149 L392 120 L363 112 L392 104 Z" fill="#ebd197" fill-opacity="0.65"/>
+                <circle cx="240" cy="110" r="3" fill="#ebd197" fill-opacity="0.6"/>
+                <circle cx="570" cy="130" r="3.5" fill="#ebd197" fill-opacity="0.7"/>
+                <circle cx="290" cy="240" r="2.5" fill="#ffffff" fill-opacity="0.4"/>
+                <circle cx="530" cy="220" r="2.5" fill="#ffffff" fill-opacity="0.5"/>
+            </svg>`;
+            return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+        }
+
+        function createSampleStageCardSVG(charName, cardTitle, stageLabel, c1, c2, accent) {
+            const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" width="640" height="400">
+                <defs>
+                    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="${c1}"/>
+                        <stop offset="100%" stop-color="${c2}"/>
+                    </linearGradient>
+                </defs>
+                <rect width="640" height="400" fill="url(#g)"/>
+                <circle cx="320" cy="175" r="120" fill="${accent}" fill-opacity="0.2"/>
+                <circle cx="320" cy="175" r="88" fill="none" stroke="#ebd197" stroke-width="1.5" stroke-dasharray="6 6" stroke-opacity="0.65"/>
+                <path d="M320 75 L331 115 L371 126 L331 137 L320 177 L309 137 L269 126 L309 115 Z" fill="#ebd197" fill-opacity="0.85"/>
+                <rect x="16" y="16" width="608" height="368" rx="14" fill="none" stroke="#ebd197" stroke-width="2" stroke-opacity="0.75"/>
+                <rect x="120" y="275" width="400" height="72" rx="12" fill="#0d1122" fill-opacity="0.82" stroke="#ebd197" stroke-width="1"/>
+                <text x="320" y="305" fill="#ebd197" font-family="sans-serif" font-size="15" text-anchor="middle" letter-spacing="2">${charName}</text>
+                <text x="320" y="334" fill="#ffffff" font-family="sans-serif" font-weight="bold" font-size="21" text-anchor="middle" letter-spacing="1">「${cardTitle}」</text>
+            </svg>`;
+            return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+        }
+
+        /* ============================================================================
+         * 二、全局状态与防卡死 IndexedDB + LocalStorage 双保险存储
+         * ============================================================================ */
+        const DB_NAME = 'GachaJournalDB_v3';
+        const STORE_NAME = 'appStateStore';
+        const STATE_KEY = 'journalData_v3';
+        const LEGACY_KEYS = ['journalData_v3', 'journalData_v2', 'journalData_v1'];
+
+        let appData = getDefaultAppData();
+
+        let uiState = {
+            currentPage: 'YEAR_MONTH',
+            selectedYear: 2026,
+            selectedMonth: null,
+            selectedEventId: null,
+            editingEventId: null,
+            replacingCardSlotInfo: null,
+            monthPageLeadFilter: 'ALL',
+            yearPageLeadFilter: 'ALL',
+            modalSelectedLeads: ['叶瑄']
+        };
+
+        let modalTempBannerDataUrl = '';
+        let modalTempSlot1DataUrl = '';
+        let modalTempSlot2DataUrl = '';
+
+        function getDefaultAppData() {
+            return {
+                years: [2024, 2025, 2026],
+                cardAspectMode: 'horizontal',
+                eventsByYearMonth: {
+                    '2026-10': [
+                        {
+                            id: 'ev_sample_2026_10_yexuan',
+                            name: '怪谈：时融',
+                            maleLeads: ['叶瑄'],
+                            startDate: '10月31日',
+                            endDate: '11月7日',
+                            banner: createSampleBannerSVG('怪谈：时融', '10月31日 - 11月7日', '叶瑄'),
+                            isCustomBanner: false,
+                            usedPigment: '30',
+                            usedDiamond: '4500',
+                            moneySpent: '128',
+                            afterTopupPigment: '20',
+                            afterTopupDiamond: '4500',
+                            totalAvailablePigment: '45',
+                            totalAvailableDiamond: '9000',
+                            remainingPigment: '15',
+                            remainingDiamond: '4500',
+                            remainingNote: '怪谈特惠颜料礼盒',
+                            cards: [
+                                {
+                                    id: 'card_dual_yx1',
+                                    lead: '叶瑄',
+                                    name: '时融',
+                                    img1: createSampleStageCardSVG('叶 瑄 · SSR', '时融', '一段 · 突破前', '#312e48', '#171625', '#c084fc'),
+                                    img2: createSampleStageCardSVG('叶 瑄 · SSR', '时融', '二段 · 突破后', '#3f3356', '#1b162a', '#e879f9'),
+                                    owned: true
+                                }
+                            ]
+                        },
+                        {
+                            id: 'ev_sample_2026_10_1',
+                            name: '万圣奇幻夜·星界漫游',
+                            maleLeads: ['混池/多人', '司岚', '罗夏', '艾因'],
+                            startDate: '10月1日',
+                            endDate: '10月14日',
+                            banner: createSampleBannerSVG('万圣奇幻夜 · 星界漫游', '10月1日 - 10月14日', '混池/多人'),
+                            isCustomBanner: false,
+                            usedPigment: '40',
+                            usedDiamond: '6000',
+                            moneySpent: '328',
+                            afterTopupPigment: '25',
+                            afterTopupDiamond: '4500',
+                            totalAvailablePigment: '58',
+                            totalAvailableDiamond: '12000',
+                            remainingPigment: '18',
+                            remainingDiamond: '6000',
+                            remainingNote: '小月卡+万圣特惠颜料包',
+                            cards: [
+                                {
+                                    id: 'card_dual_1',
+                                    lead: '司岚',
+                                    name: '深海回响',
+                                    img1: createSampleStageCardSVG('司 岚 · SSR', '深海回响', '一段 · 突破前', '#1b3556', '#0f172a', '#38bdf8'),
+                                    img2: createSampleStageCardSVG('司 岚 · SSR', '深海回响', '二段 · 突破后', '#1e295b', '#0d1326', '#818cf8'),
+                                    owned: true
+                                },
+                                {
+                                    id: 'card_dual_2',
+                                    lead: '罗夏',
+                                    name: '流金岁月',
+                                    img1: createSampleStageCardSVG('罗 夏 · SSR', '流金岁月', '一段 · 突破前', '#4a1d39', '#1c1126', '#f59e0b'),
+                                    img2: createSampleStageCardSVG('罗 夏 · SSR', '流金岁月', '二段 · 突破后', '#5b2333', '#23111c', '#fbbf24'),
+                                    owned: true
+                                },
+                                {
+                                    id: 'card_dual_3',
+                                    lead: '艾因',
+                                    name: '绯色残响',
+                                    img1: createSampleStageCardSVG('艾 因 · SSR', '绯色残响', '一段 · 突破前', '#3b1929', '#14111d', '#f43f5e'),
+                                    img2: createSampleStageCardSVG('艾 因 · SSR', '绯色残响', '二段 · 突破后', '#4c1428', '#190f1c', '#fb7185'),
+                                    owned: false
+                                }
+                            ]
+                        }
+                    ]
+                }
+            };
+        }
+
+        // 兼容旧版数据与修复残缺字段
+        function normalizeEventData(ev) {
+            if (!ev || typeof ev !== 'object') return;
+            if (!ev.id) ev.id = 'ev_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+            if (!ev.name) ev.name = '未命名活动';
+
+            if (!Array.isArray(ev.maleLeads) || ev.maleLeads.length === 0) {
+                if (Array.isArray(ev.characters) && ev.characters.length > 0) {
+                    ev.maleLeads = [...ev.characters];
+                } else {
+                    const detected = [];
+                    ['艾因', '路辰', '罗夏', '司岚', '叶瑄'].forEach(name => {
+                        if (String(ev.name || '').includes(name)) detected.push(name);
+                    });
+                    ev.maleLeads = detected.length > 0 ? detected : ['叶瑄'];
+                }
+            }
+
+            if (ev.startDate === undefined) ev.startDate = '';
+            if (ev.endDate === undefined) ev.endDate = '';
+            if (!ev.banner) {
+                ev.banner = createSampleBannerSVG(ev.name, formatEventDateRange(ev), ev.maleLeads[0]);
+                ev.isCustomBanner = false;
+            }
+            if (ev.usedPigment === undefined) ev.usedPigment = ev.pigmentSpent || '0';
+            if (ev.usedDiamond === undefined) ev.usedDiamond = ev.diamondSpent || '0';
+            if (ev.moneySpent === undefined) ev.moneySpent = '0';
+            if (ev.afterTopupPigment === undefined) ev.afterTopupPigment = '0';
+            if (ev.afterTopupDiamond === undefined) ev.afterTopupDiamond = '0';
+            if (ev.totalAvailablePigment === undefined) ev.totalAvailablePigment = '0';
+            if (ev.totalAvailableDiamond === undefined) ev.totalAvailableDiamond = '0';
+            if (ev.remainingPigment === undefined) ev.remainingPigment = '0';
+            if (ev.remainingDiamond === undefined) ev.remainingDiamond = '0';
+            if (ev.remainingNote === undefined) ev.remainingNote = '';
+
+            if (!Array.isArray(ev.cards)) ev.cards = [];
+            const defaultLead = ev.maleLeads[0] || '叶瑄';
+            ev.cards.forEach((c, idx) => {
+                if (!c.id) c.id = 'card_dual_' + Date.now() + '_' + idx;
+                if (!c.lead) c.lead = defaultLead;
+                if (!c.name) c.name = `本期画灵 #${idx + 1}`;
+                if (!c.img1 && c.img) c.img1 = c.img;
+                if (!c.img1) c.img1 = createSampleStageCardSVG(c.lead || '画灵', c.name || '一段卡面', '一段 · 突破前', '#1e3a5f', '#0f172a', '#38bdf8');
+                if (!c.img2) c.img2 = createSampleStageCardSVG(c.lead || '画灵', c.name || '二段卡面', '二段 · 突破后', '#3b1d4a', '#141122', '#c084fc');
+                if (typeof c.owned !== 'boolean') c.owned = true;
+            });
+        }
+
+        function sanitizeAndMigrateData(rawObj) {
+            if (!rawObj || typeof rawObj !== 'object') return getDefaultAppData();
+            if (!Array.isArray(rawObj.years) || rawObj.years.length === 0) {
+                rawObj.years = [2024, 2025, 2026];
+            }
+            if (!rawObj.cardAspectMode) rawObj.cardAspectMode = 'horizontal';
+            if (!rawObj.eventsByYearMonth || typeof rawObj.eventsByYearMonth !== 'object') {
+                rawObj.eventsByYearMonth = {};
+            }
+            Object.keys(rawObj.eventsByYearMonth).forEach(ymKey => {
+                const list = rawObj.eventsByYearMonth[ymKey];
+                if (Array.isArray(list)) {
+                    list.forEach(ev => normalizeEventData(ev));
+                } else {
+                    rawObj.eventsByYearMonth[ymKey] = [];
+                }
+            });
+            return rawObj;
+        }
+
+        function openDatabaseWithTimeout(timeoutMs = 600) {
+            return new Promise((resolve, reject) => {
+                let settled = false;
+                const timer = setTimeout(() => {
+                    if (!settled) {
+                        settled = true;
+                        reject(new Error('IndexedDB open timeout'));
+                    }
+                }, timeoutMs);
+
+                try {
+                    const req = indexedDB.open(DB_NAME, 1);
+                    req.onupgradeneeded = (e) => {
+                        const db = e.target.result;
+                        if (!db.objectStoreNames.contains(STORE_NAME)) {
+                            db.createObjectStore(STORE_NAME);
+                        }
+                    };
+                    req.onsuccess = (e) => {
+                        if (!settled) {
+                            settled = true;
+                            clearTimeout(timer);
+                            resolve(e.target.result);
+                        }
+                    };
+                    req.onerror = (e) => {
+                        if (!settled) {
+                            settled = true;
+                            clearTimeout(timer);
+                            reject(e.target.error || new Error('IndexedDB error'));
+                        }
+                    };
+                } catch (err) {
+                    if (!settled) {
+                        settled = true;
+                        clearTimeout(timer);
+                        reject(err);
+                    }
+                }
+            });
+        }
+
+        async function loadDataFromStorage() {
+            // 先尝试从 localStorage 读取做即时保底
+            for (const key of LEGACY_KEYS) {
+                try {
+                    const raw = localStorage.getItem(key);
+                    if (raw) {
+                        const parsed = JSON.parse(raw);
+                        if (parsed && typeof parsed === 'object') {
+                            appData = sanitizeAndMigrateData(parsed);
+                            break;
+                        }
+                    }
+                } catch (_) {}
+            }
+
+            // 再尝试从带超时保护的 IndexedDB 读取最新数据
+            try {
+                const db = await openDatabaseWithTimeout(600);
+                await new Promise((resolve) => {
+                    const tx = db.transaction(STORE_NAME, 'readonly');
+                    const store = tx.objectStore(STORE_NAME);
+                    const req = store.get(STATE_KEY);
+                    req.onsuccess = () => {
+                        if (req.result && typeof req.result === 'object') {
+                            appData = sanitizeAndMigrateData(req.result);
+                        }
+                        resolve();
+                    };
+                    req.onerror = () => resolve();
+                });
+            } catch (_) {
+                // IndexedDB 阻塞或不可用时直接使用已保底的 appData
+            }
+            updateIconBadgeCount();
+        }
+
+        async function saveDataToStorage() {
+            updateIconBadgeCount();
+            try {
+                localStorage.setItem(STATE_KEY, JSON.stringify(appData));
+            } catch (_) {}
+
+            try {
+                const db = await openDatabaseWithTimeout(600);
+                const tx = db.transaction(STORE_NAME, 'readwrite');
+                tx.objectStore(STORE_NAME).put(appData, STATE_KEY);
+            } catch (_) {}
+        }
+
+        /* ============================================================================
+         * 三、三重保险手机端图片读取与压缩引擎（彻底解决手机端“图片处理失败”）
+         * ============================================================================ */
+        function readAsDataURLPromise(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    if (e.target && e.target.result) resolve(e.target.result);
+                    else reject(new Error('Empty reader result'));
+                };
+                reader.onerror = () => reject(new Error('FileReader error'));
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function compressImageFromSrc(srcUrl, maxWidth = 1000, maxHeight = 1000, quality = 0.8) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                const timer = setTimeout(() => {
+                    reject(new Error('Image load timeout'));
+                }, 4500);
+
+                img.onload = () => {
+                    clearTimeout(timer);
+                    try {
+                        let width = img.naturalWidth || img.width || 800;
+                        let height = img.naturalHeight || img.height || 600;
+                        if (width > maxWidth || height > maxHeight) {
+                            const ratio = Math.min(maxWidth / width, maxHeight / height);
+                            width = Math.max(1, Math.round(width * ratio));
+                            height = Math.max(1, Math.round(height * ratio));
+                        }
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.fillStyle = '#181d35';
+                        ctx.fillRect(0, 0, width, height);
+                        ctx.drawImage(img, 0, 0, width, height);
+                        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+                        if (dataUrl && dataUrl.startsWith('data:image/')) {
+                            resolve(dataUrl);
+                        } else {
+                            reject(new Error('Canvas toDataURL invalid'));
+                        }
+                    } catch (canvasErr) {
+                        reject(canvasErr);
+                    }
+                };
+                img.onerror = (err) => {
+                    clearTimeout(timer);
+                    reject(err);
+                };
+                img.src = srcUrl;
+            });
+        }
+
+        async function compressImageFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.8) {
+            if (window.URL && URL.createObjectURL) {
+                let blobUrl = null;
+                try {
+                    blobUrl = URL.createObjectURL(file);
+                    const compressed = await compressImageFromSrc(blobUrl, maxWidth, maxHeight, quality);
+                    URL.revokeObjectURL(blobUrl);
+                    return compressed;
+                } catch (e1) {
+                    if (blobUrl) {
+                        try { URL.revokeObjectURL(blobUrl); } catch (_) {}
+                    }
+                }
+            }
+
+            try {
+                const rawDataUrl = await readAsDataURLPromise(file);
+                try {
+                    return await compressImageFromSrc(rawDataUrl, maxWidth, maxHeight, quality);
+                } catch (e2) {
+                    return rawDataUrl;
+                }
+            } catch (e3) {
+                if (window.URL && URL.createObjectURL) {
+                    return URL.createObjectURL(file);
+                }
+                throw e3;
+            }
+        }
+
+        /* ============================================================================
+         * 四、多页面严格切换导航系统（不往下滑堆叠，而是进入专属页）
+         * ============================================================================ */
+        function updateIconBadgeCount() {
+            let totalEvents = 0;
+            Object.values(appData.eventsByYearMonth || {}).forEach(list => {
+                if (Array.isArray(list)) totalEvents += list.length;
+            });
+            const badgeText = document.getElementById('iconBadgeText');
+            if (badgeText) {
+                badgeText.textContent = `${totalEvents} 活动`;
+            }
+        }
+
+        // 点击桌面图标 -> 立即进入页面1（年月选择页）
+        function openJournalFromIcon() {
+            try {
+                const iconEl = document.getElementById('iconView');
+                const journalEl = document.getElementById('journalView');
+                if (iconEl) iconEl.classList.add('hidden');
+                if (journalEl) journalEl.classList.remove('hidden');
+                if (!appData || !Array.isArray(appData.years)) {
+                    appData = getDefaultAppData();
+                }
+                switchPage(uiState.currentPage || 'YEAR_MONTH');
+            } catch (err) {
+                appData = getDefaultAppData();
+                switchPage('YEAR_MONTH');
+            }
+        }
+        window.openJournalFromIcon = openJournalFromIcon;
+        window.enterApp = openJournalFromIcon;
+
+        // 应急修复缓存按钮
+        window.emergencyRepairData = function () {
+            appData = sanitizeAndMigrateData(appData);
+            saveDataToStorage();
+            openJournalFromIcon();
+            showToast('已修复手账缓存并进入主界面！');
+        };
+
+        // 缩回桌面图标
+        function minimizeToIcon() {
+            document.getElementById('journalView').classList.add('hidden');
+            document.getElementById('iconView').classList.remove('hidden');
+            updateIconBadgeCount();
+        }
+
+        // 核心页面切换器
+        function switchPage(targetPage) {
+            uiState.currentPage = targetPage;
+
+            const p1 = document.getElementById('pageYearMonth');
+            const p2 = document.getElementById('pageMonthDetail');
+            const p3 = document.getElementById('pageEventDetail');
+
+            p1.classList.add('hidden');
+            p2.classList.add('hidden');
+            p3.classList.add('hidden');
+
+            if (targetPage === 'YEAR_MONTH') {
+                p1.classList.remove('hidden');
+                renderYearList();
+                renderMonthGrid();
+            } else if (targetPage === 'MONTH_DETAIL') {
+                p2.classList.remove('hidden');
+                renderMonthDedicatedPage();
+            } else if (targetPage === 'EVENT_DETAIL') {
+                p3.classList.remove('hidden');
+                renderEventDedicatedPage();
+            }
+
+            renderHeaderBreadcrumb();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // 顶部面包屑导航渲染
+        function renderHeaderBreadcrumb() {
+            const bc = document.getElementById('headerBreadcrumb');
+            if (!bc) return;
+
+            if (uiState.currentPage === 'YEAR_MONTH') {
+                bc.innerHTML = `<span class="text-gold-300 font-medium">① 年月总览页</span> <span>（点击年份出月份，点击月份进当月专属页）</span>`;
+            } else if (uiState.currentPage === 'MONTH_DETAIL') {
+                bc.innerHTML = `
+                    <button onclick="backToYearMonthPage()" class="hover:text-gold-300 underline">年月总览</button>
+                    <i class="fa-solid fa-angle-right text-[10px] text-gold-400"></i>
+                    <span class="text-gold-300 font-semibold">② ${uiState.selectedYear}年${uiState.selectedMonth}月 专属页</span>
+                `;
+            } else if (uiState.currentPage === 'EVENT_DETAIL') {
+                const ev = getCurrentEventObj();
+                const evName = ev ? escapeHtml(ev.name) : '活动详情';
+                bc.innerHTML = `
+                    <button onclick="backToYearMonthPage()" class="hover:text-gold-300 underline">年月总览</button>
+                    <i class="fa-solid fa-angle-right text-[10px] text-gold-400"></i>
+                    <button onclick="backToMonthPage()" class="hover:text-gold-300 underline">${uiState.selectedYear}年${uiState.selectedMonth}月</button>
+                    <i class="fa-solid fa-angle-right text-[10px] text-gold-400"></i>
+                    <span class="text-gold-300 font-semibold truncate max-w-[180px] sm:max-w-xs">③ ${evName}</span>
+                `;
+            }
+        }
+
+        function backToYearMonthPage() {
+            switchPage('YEAR_MONTH');
+        }
+
+        function backToMonthPage() {
+            switchPage('MONTH_DETAIL');
+        }
+
+        function quickJumpToSample() {
+            let targetYM = '2026-10';
+            if (!appData.eventsByYearMonth[targetYM] || appData.eventsByYearMonth[targetYM].length === 0) {
+                const keys = Object.keys(appData.eventsByYearMonth).filter(k => appData.eventsByYearMonth[k] && appData.eventsByYearMonth[k].length > 0);
+                if (keys.length > 0) targetYM = keys[0];
+            }
+            const [yStr, mStr] = targetYM.split('-');
+            uiState.selectedYear = parseInt(yStr, 10);
+            uiState.selectedMonth = parseInt(mStr, 10);
+            switchPage('MONTH_DETAIL');
+            showToast(`已进入 ${uiState.selectedYear}年${uiState.selectedMonth}月 专属页面，点击活动名称即可看卡面与资源`);
+        }
+
+        /* ============================================================================
+         * 五、【页面 1】年份与月份选择页逻辑
+         * ============================================================================ */
+        function getYearEventCount(year) {
+            let count = 0;
+            for (let m = 1; m <= 12; m++) {
+                const key = `${year}-${m}`;
+                if (appData.eventsByYearMonth[key]) {
+                    count += appData.eventsByYearMonth[key].length;
+                }
+            }
+            return count;
+        }
+
+        function renderYearList() {
+            const container = document.getElementById('yearListContainer');
+            if (!container) return;
+            container.innerHTML = '';
+
+            appData.years.sort((a, b) => a - b).forEach(year => {
+                const isSelected = uiState.selectedYear === year;
+                const eventCount = getYearEventCount(year);
+
+                const btnWrapper = document.createElement('div');
+                btnWrapper.className = 'relative inline-flex items-center group';
+
+                const btn = document.createElement('button');
+                btn.onclick = () => handleYearClick(year);
+                btn.className = isSelected
+                    ? 'px-5 py-2.5 rounded-2xl font-serif font-bold text-sm sm:text-base bg-gradient-to-r from-[#1f2544] to-[#2c345c] text-gold-300 border-2 border-gold-400 shadow-md transition-all flex items-center gap-2'
+                    : 'px-5 py-2.5 rounded-2xl font-serif font-bold text-sm sm:text-base bg-white hover:bg-gold-300/20 text-ink-900 border border-gold-400/50 shadow-xs transition-all flex items-center gap-2';
+
+                btn.innerHTML = `
+                    <i class="fa-regular ${isSelected ? 'fa-folder-open text-gold-400' : 'fa-calendar text-gold-600'}"></i>
+                    <span>${year}年</span>
+                    ${eventCount > 0 ? `<span class="text-[11px] px-2 py-0.5 rounded-full ${isSelected ? 'bg-gold-400 text-ink-900' : 'bg-amber-500/15 text-amber-700 border border-amber-500/30'} font-sans font-semibold">${eventCount}活动</span>` : ''}
+                `;
+
+                btnWrapper.appendChild(btn);
+
+                if (appData.years.length > 1) {
+                    const delBtn = document.createElement('button');
+                    delBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        confirmDeleteYear(year);
+                    };
+                    delBtn.title = `删除${year}年`;
+                    delBtn.className = 'opacity-0 group-hover:opacity-100 -ml-2 -mt-6 w-5 h-5 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center shadow transition hover:bg-red-600';
+                    delBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+                    btnWrapper.appendChild(delBtn);
+                }
+
+                container.appendChild(btnWrapper);
+            });
+        }
+
+        function handleYearClick(year) {
+            if (uiState.selectedYear === year) {
+                uiState.selectedYear = null;
+            } else {
+                uiState.selectedYear = year;
+            }
+            renderYearList();
+            renderMonthGrid();
+        }
+
+        function renderYearPageLeadFilterBar() {
+            const bar = document.getElementById('yearPageLeadFilterBar');
+            if (!bar) return;
+            const current = uiState.yearPageLeadFilter || 'ALL';
+
+            let html = `<button onclick="setYearPageLeadFilter('ALL')" class="px-2.5 py-1 rounded-full text-[11px] font-semibold transition flex-shrink-0 ${
+                current === 'ALL' ? 'bg-ink-900 text-gold-300 shadow-2xs' : 'bg-white text-ink-700 border border-gold-300/60 hover:bg-cream-200'
+            }">全部男主</button>`;
+
+            MALE_LEADS.forEach(lead => {
+                const active = current === lead.id;
+                html += `<button onclick="setYearPageLeadFilter('${lead.id}')" class="px-2.5 py-1 rounded-full text-[11px] font-semibold transition flex-shrink-0 flex items-center gap-1" style="${
+                    active
+                        ? `background:${lead.color}; color:#fff; border:1px solid ${lead.border};`
+                        : `background:#fff; color:#4a423d; border:1px solid rgba(200,155,72,0.4);`
+                }">
+                    <span class="w-1.5 h-1.5 rounded-full" style="background:${active ? '#fff' : lead.color}"></span>
+                    <span>${lead.name}</span>
+                </button>`;
+            });
+
+            bar.innerHTML = html;
+        }
+
+        function setYearPageLeadFilter(leadId) {
+            uiState.yearPageLeadFilter = leadId;
+            renderMonthGrid();
+        }
+
+        function eventMatchesLeadFilter(ev, filterLead) {
+            if (!filterLead || filterLead === 'ALL') return true;
+            const leads = Array.isArray(ev.maleLeads) && ev.maleLeads.length > 0 ? ev.maleLeads : ['混池/多人'];
+            if (leads.includes(filterLead)) return true;
+            if (Array.isArray(ev.cards) && ev.cards.some(c => c.lead === filterLead)) return true;
+            return false;
+        }
+
+        function renderMonthGrid() {
+            const wrapper = document.getElementById('monthSectionWrapper');
+            const grid = document.getElementById('monthGridContainer');
+            const yearTitle = document.getElementById('currentYearTitle');
+            if (!wrapper || !grid) return;
+
+            if (!uiState.selectedYear) {
+                wrapper.classList.add('hidden');
+                return;
+            }
+
+            wrapper.classList.remove('hidden');
+            yearTitle.textContent = `${uiState.selectedYear}年`;
+            renderYearPageLeadFilterBar();
+            grid.innerHTML = '';
+
+            for (let m = 1; m <= 12; m++) {
+                const key = `${uiState.selectedYear}-${m}`;
+                const allEvents = appData.eventsByYearMonth[key] || [];
+                const filteredEvents = allEvents.filter(ev => eventMatchesLeadFilter(ev, uiState.yearPageLeadFilter));
+                const count = filteredEvents.length;
+
+                const btn = document.createElement('button');
+                btn.onclick = () => {
+                    uiState.monthPageLeadFilter = uiState.yearPageLeadFilter || 'ALL';
+                    enterMonthDedicatedPage(m);
+                };
+
+                const styleClass = count > 0
+                    ? 'bg-gradient-to-b from-amber-50 to-cream-100 hover:from-gold-300/30 hover:to-amber-100/80 text-ink-900 border-2 border-gold-400 shadow-sm hover:-translate-y-0.5'
+                    : 'bg-white/85 hover:bg-white text-ink-700 border border-gold-300/60 hover:border-gold-400 hover:-translate-y-0.5';
+
+                const previewPills = filteredEvents.slice(0, 2).map(ev => {
+                    const firstLead = (ev.maleLeads && ev.maleLeads[0]) || '混池/多人';
+                    const meta = getLeadMeta(firstLead);
+                    return `<div class="w-full max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-[10px] px-1.5 py-0.5 rounded bg-white/90 border border-gold-300/60 text-ink-900 flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 rounded-full flex-shrink-0" style="background:${meta.color}"></span>
+                        <span class="truncate">${escapeHtml(ev.name)}</span>
+                    </div>`;
+                }).join('');
+
+                btn.className = `group relative py-3 px-2 rounded-2xl transition-all flex flex-col items-center justify-start gap-1 min-w-0 overflow-hidden ${styleClass}`;
+                btn.innerHTML = `
+                    <div class="flex items-center justify-between w-full px-1">
+                        <span class="font-serif font-bold text-sm sm:text-base group-hover:text-gold-700 transition">${m}月</span>
+                        ${count > 0
+                            ? `<span class="text-[10px] px-1.5 py-0.2 rounded-full bg-gradient-to-r from-amber-500 to-gold-600 text-white font-semibold">${count}活动</span>`
+                            : `<span class="text-[10px] text-ink-500/50">无</span>`
+                        }
+                    </div>
+                    ${count > 0
+                        ? `<div class="w-full space-y-1 mt-0.5 overflow-hidden">${previewPills}${count > 2 ? `<div class="text-[9px] text-gold-700 font-semibold">+还有${count - 2}个活动</div>` : ''}</div>`
+                        : `<span class="text-[10px] text-ink-500/60 my-2">点击添加</span>`
+                    }
+                `;
+                grid.appendChild(btn);
+            }
+        }
+
+        function enterMonthDedicatedPage(month) {
+            uiState.selectedMonth = month;
+            switchPage('MONTH_DETAIL');
+        }
+
+        /* ============================================================================
+         * 六、【页面 2】月份专属页面逻辑（男主筛选 + 活动图 + 几号-几号日期 + 防出框活动名栏）
+         * ============================================================================ */
+        function formatEventDateRange(ev) {
+            if (!ev) return '未设置日期';
+            const s = (ev.startDate || '').trim();
+            const e = (ev.endDate || '').trim();
+            if (s && e) return `${s} - ${e}`;
+            if (s || e) return s || e;
+            return `${uiState.selectedMonth || ''}月活动`;
+        }
+
+        function setMonthLeadFilter(leadId) {
+            uiState.monthPageLeadFilter = leadId;
+            renderMonthDedicatedPage();
+        }
+
+        function renderMonthLeadFilterBar(allMonthEvents) {
+            const container = document.getElementById('monthLeadFilterContainer');
+            if (!container) return;
+            const current = uiState.monthPageLeadFilter || 'ALL';
+
+            let html = `<button onclick="setMonthLeadFilter('ALL')" class="px-3 py-1 rounded-xl text-xs font-semibold transition ${
+                current === 'ALL'
+                    ? 'bg-ink-900 text-gold-300 shadow-xs'
+                    : 'bg-white text-ink-700 border border-gold-300/70 hover:bg-cream-200'
+            }">全部 (${allMonthEvents.length})</button>`;
+
+            MALE_LEADS.forEach(lead => {
+                const matchedCount = allMonthEvents.filter(ev => eventMatchesLeadFilter(ev, lead.id)).length;
+                const active = current === lead.id;
+                html += `<button onclick="setMonthLeadFilter('${lead.id}')" class="px-2.5 py-1 rounded-xl text-xs font-semibold transition flex items-center gap-1.5" style="${
+                    active
+                        ? `background:${lead.color}; color:#fff; border:1px solid ${lead.border}; box-shadow:0 2px 6px rgba(0,0,0,0.15);`
+                        : `background:#fff; color:#4a423d; border:1px solid rgba(200,155,72,0.45);`
+                }">
+                    <span class="w-2 h-2 rounded-full" style="background:${active ? '#fff' : lead.color}"></span>
+                    <span>${lead.name}</span>
+                    ${matchedCount > 0 ? `<span class="text-[10px] px-1.5 rounded-full ${active ? 'bg-black/25 text-white' : 'bg-cream-200 text-ink-700'}">${matchedCount}</span>` : ''}
+                </button>`;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function renderMonthDedicatedPage() {
+            const heading = document.getElementById('monthPageHeading');
+            const container = document.getElementById('monthEventListContainer');
+            if (!heading || !container) return;
+
+            heading.textContent = `${uiState.selectedYear}年 · ${uiState.selectedMonth}月 活动一览`;
+            container.innerHTML = '';
+
+            const key = `${uiState.selectedYear}-${uiState.selectedMonth}`;
+            const allEvents = appData.eventsByYearMonth[key] || [];
+            allEvents.forEach(ev => normalizeEventData(ev));
+
+            renderMonthLeadFilterBar(allEvents);
+
+            const events = allEvents.filter(ev => eventMatchesLeadFilter(ev, uiState.monthPageLeadFilter));
+
+            if (allEvents.length === 0) {
+                container.className = 'block';
+                container.innerHTML = `
+                    <div class="text-center py-14 px-4 rounded-2xl bg-cream-100/90 border-2 border-dashed border-gold-400/60">
+                        <div class="w-14 h-14 rounded-full bg-gold-300/25 text-gold-600 mx-auto flex items-center justify-center mb-3">
+                            <i class="fa-regular fa-calendar-plus text-2xl"></i>
+                        </div>
+                        <p class="font-serif font-bold text-ink-900 text-base">${uiState.selectedYear}年${uiState.selectedMonth}月 还没有添加活动</p>
+                        <p class="text-xs text-ink-500 mt-1">支持选择所属男主、上传活动图片、填写活动名称与自定义几号-几号日期</p>
+                        <button onclick="openEventModal()" class="mt-5 px-5 py-2.5 rounded-xl bg-ink-900 text-gold-300 text-xs sm:text-sm font-semibold hover:bg-ink-700 transition inline-flex items-center gap-2 shadow">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>添加本月第一个活动</span>
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            if (events.length === 0) {
+                container.className = 'block';
+                container.innerHTML = `
+                    <div class="text-center py-10 px-4 rounded-2xl bg-cream-100/90 border border-gold-400/50">
+                        <p class="font-serif font-bold text-ink-900 text-sm">本月暂无【${escapeHtml(uiState.monthPageLeadFilter)}】相关的活动记录</p>
+                        <div class="mt-3 flex items-center justify-center gap-2">
+                            <button onclick="setMonthLeadFilter('ALL')" class="px-4 py-1.5 rounded-xl bg-white border border-gold-400 text-xs font-semibold text-ink-900">显示本月全部活动</button>
+                            <button onclick="openEventModal()" class="px-4 py-1.5 rounded-xl bg-ink-900 text-gold-300 text-xs font-semibold">+ 添加该男主活动</button>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            container.className = 'grid grid-cols-1 md:grid-cols-2 gap-5';
+
+            events.forEach(ev => {
+                const cards = ev.cards || [];
+                const ownedCount = cards.filter(c => c.owned).length;
+                const dateText = formatEventDateRange(ev);
+                const leadBadges = renderLeadBadgesHtml(ev.maleLeads, 'sm');
+                const isDefaultSvg = !ev.isCustomBanner && String(ev.banner || '').startsWith('data:image/svg+xml');
+
+                const cardEl = document.createElement('article');
+                cardEl.className = 'group rounded-2xl bg-white border-2 border-gold-400/60 hover:border-gold-500 shadow-md hover:shadow-xl overflow-hidden transition-all flex flex-col justify-between min-w-0';
+
+                cardEl.innerHTML = `
+                    <div class="min-w-0">
+                        <!-- 1. 活动图片区域 -->
+                        <div class="relative w-full h-44 sm:h-48 bg-[#191e36] overflow-hidden">
+                            <img src="${ev.banner}" alt="${escapeHtml(ev.name)}" onclick="enterEventDedicatedPage('${ev.id}')" class="w-full h-full object-cover cursor-pointer transition-transform duration-500 group-hover:scale-105">
+                            
+                            ${isDefaultSvg ? `
+                            <div onclick="enterEventDedicatedPage('${ev.id}')" class="cursor-pointer absolute inset-0 flex flex-col items-center justify-center p-4 text-center pointer-events-none">
+                                <div class="px-3.5 py-1.5 rounded-xl bg-black/40 backdrop-blur-[2px] border border-gold-400/35 max-w-[90%]">
+                                    <div class="font-serif font-bold text-base sm:text-lg text-cream-50 break-words line-clamp-2 drop-shadow">${escapeHtml(ev.name)}</div>
+                                    <div class="text-[10px] text-gold-300/90 mt-0.5">点击进入详情页或上传自定义封面</div>
+                                </div>
+                            </div>
+                            ` : ''}
+
+                            <!-- 左上角醒目：自定义活动日期（几号 - 几号） -->
+                            <div class="absolute top-3 left-3 max-w-[60%] px-2.5 py-1 rounded-full bg-[#181d35]/90 backdrop-blur-xs border border-gold-400/70 text-[11px] text-gold-300 font-semibold shadow-md flex items-center gap-1.5">
+                                <i class="fa-regular fa-calendar-days text-amber-400 flex-shrink-0"></i>
+                                <span class="truncate">${escapeHtml(dateText)}</span>
+                            </div>
+
+                            <!-- 右上角操作：编辑活动 / 删除活动 -->
+                            <div class="absolute top-3 right-3 flex items-center gap-1.5 z-10">
+                                <button onclick="openEventModal('${ev.id}')" class="px-2.5 py-1 rounded-lg bg-black/70 hover:bg-black/90 text-cream-50 text-[11px] backdrop-blur-xs border border-white/20 transition flex items-center gap-1" title="修改男主、活动图片、名称或日期">
+                                    <i class="fa-solid fa-pen text-gold-300 text-[10px]"></i>
+                                    <span>编辑</span>
+                                </button>
+                                <button onclick="confirmDeleteEvent('${ev.id}')" class="w-7 h-7 rounded-lg bg-black/70 hover:bg-red-600 text-cream-50 text-xs backdrop-blur-xs border border-white/20 transition flex items-center justify-center" title="删除该活动">
+                                    <i class="fa-regular fa-trash-can"></i>
+                                </button>
+                            </div>
+
+                            <!-- 左下角：所属男主专属色彩标签 -->
+                            <div class="absolute bottom-2.5 left-3 flex flex-wrap items-center gap-1 max-w-[55%]">
+                                ${leadBadges}
+                            </div>
+
+                            <!-- 右下角画灵收集与消耗角标 -->
+                            <div class="absolute bottom-2.5 right-3 px-2.5 py-0.5 rounded-full bg-black/75 backdrop-blur-xs border border-white/15 text-[11px] text-cream-100 flex items-center gap-1.5">
+                                <span><i class="fa-solid fa-star text-amber-400 mr-1"></i>画灵 ${ownedCount}/${cards.length}</span>
+                                <span>·</span>
+                                <span>颜料 ${escapeHtml(ev.usedPigment || '0')}</span>
+                            </div>
+                        </div>
+
+                        <!-- 2. 点击活动名称 —— 进入该活动的专属页面 -->
+                        <div onclick="enterEventDedicatedPage('${ev.id}')" class="cursor-pointer p-3.5 sm:p-4 bg-gradient-to-r from-[#1f2544] via-[#283056] to-[#1f2544] hover:brightness-110 transition flex items-center justify-between gap-3 border-t border-gold-400/50 min-w-0">
+                            <div class="min-w-0 flex-1 overflow-hidden">
+                                <div class="flex flex-wrap items-center gap-1.5">
+                                    <span class="px-2 py-0.5 rounded bg-gold-400 text-ink-900 font-serif font-bold text-[10px] flex-shrink-0">点击活动名进入</span>
+                                    <span class="text-[11px] text-gold-300/85 truncate">${escapeHtml(dateText)}</span>
+                                </div>
+                                <h4 class="mt-1.5 font-serif font-bold text-base sm:text-lg text-cream-50 group-hover:text-gold-300 transition break-words leading-snug">
+                                    ${escapeHtml(ev.name)}
+                                </h4>
+                            </div>
+
+                            <div class="w-9 h-9 rounded-xl bg-gold-400/20 border border-gold-400/50 text-gold-300 flex items-center justify-center flex-shrink-0 group-hover:translate-x-1 transition-transform">
+                                <i class="fa-solid fa-arrow-right"></i>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(cardEl);
+            });
+        }
+
+        /* ============================================================================
+         * 七、【页面 3】活动专属页面逻辑（双卡面画灵 & 6行资源氪金账单）
+         * ============================================================================ */
+        function enterEventDedicatedPage(eventId) {
+            uiState.selectedEventId = eventId;
+            switchPage('EVENT_DETAIL');
+        }
+
+        function getCurrentEventObj() {
+            if (!uiState.selectedYear || !uiState.selectedMonth || !uiState.selectedEventId) return null;
+            const key = `${uiState.selectedYear}-${uiState.selectedMonth}`;
+            const list = appData.eventsByYearMonth[key] || [];
+            return list.find(item => item.id === uiState.selectedEventId) || null;
+        }
+
+        function renderEventDedicatedPage() {
+            const ev = getCurrentEventObj();
+            if (!ev) {
+                backToMonthPage();
+                return;
+            }
+            normalizeEventData(ev);
+
+            document.getElementById('backToMonthBtnText').textContent = `返回 ${uiState.selectedMonth}月活动页`;
+            document.getElementById('eventDetailBannerImg').src = ev.banner;
+            document.getElementById('eventDetailLeadBadges').innerHTML = renderLeadBadgesHtml(ev.maleLeads, 'sm');
+            document.getElementById('eventDetailDateRange').textContent = formatEventDateRange(ev);
+            document.getElementById('eventDetailTitle').textContent = ev.name;
+
+            const isHoriz = appData.cardAspectMode !== 'vertical';
+            document.getElementById('aspectToggleText').textContent = isHoriz ? '比例：横版卡面' : '比例：竖版卡面';
+
+            // 1. 顶部已拥有画灵汇总条
+            const cards = ev.cards || [];
+            const ownedCards = cards.filter(c => c.owned);
+            const summaryEl = document.getElementById('ownedSummaryBanner');
+
+            const ownedPillsHtml = ownedCards.length > 0
+                ? ownedCards.map(c => {
+                    const meta = getLeadMeta(c.lead || ev.maleLeads[0]);
+                    return `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-white text-xs font-bold shadow-2xs" style="background:${meta.color}; border:1px solid ${meta.border}">
+                        <i class="fa-solid fa-star text-[10px] text-yellow-200"></i>
+                        <span>${escapeHtml(c.lead ? `${c.lead}·` : '')}${escapeHtml(c.name || '未命名画灵')}</span>
+                    </span>`;
+                }).join('')
+                : `<span class="text-xs text-ink-500">暂未点亮本期画灵（点击下方任意画灵右上角的「未拥有/已拥有」按钮即可点亮整张卡）</span>`;
+
+            summaryEl.innerHTML = `
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="font-serif font-bold text-sm text-gold-700 flex items-center gap-1.5">
+                        <i class="fa-solid fa-crown text-amber-500"></i>
+                        <span>我拥有的本期画灵（${ownedCards.length} / ${cards.length} 张）：</span>
+                    </span>
+                    <div class="flex flex-wrap items-center gap-1.5">${ownedPillsHtml}</div>
+                </div>
+            `;
+
+            // 2. 渲染绘旅人专属「两张卡面为一张卡」画廊
+            const gridContainer = document.getElementById('dualCardGridContainer');
+            gridContainer.innerHTML = '';
+
+            if (cards.length === 0) {
+                gridContainer.innerHTML = `
+                    <div onclick="openAddCardModal()" class="cursor-pointer py-10 px-4 rounded-2xl border-2 border-dashed border-gold-400/70 bg-white/70 hover:bg-gold-300/10 transition text-center">
+                        <i class="fa-solid fa-images text-3xl text-gold-600 mb-2"></i>
+                        <p class="font-serif font-bold text-sm text-ink-900">点击此处新增本期画灵（两张卡面合为一卡）</p>
+                        <p class="text-xs text-ink-500 mt-1">支持上传「一段卡面（突破前）」与「二段卡面（突破后）」，整张画灵共用一个已拥有状态</p>
+                    </div>
+                `;
+            } else {
+                const aspectClass = isHoriz ? 'aspect-[16/10]' : 'aspect-[3/4]';
+
+                cards.forEach((card) => {
+                    const unit = document.createElement('div');
+                    unit.className = `rounded-2xl p-3.5 sm:p-4 transition-all duration-300 ${card.owned ? 'dual-card-owned' : 'dual-card-unowned opacity-90'}`;
+                    const leadMeta = getLeadMeta(card.lead || ev.maleLeads[0]);
+
+                    const leadOptionsHtml = MALE_LEADS.map(l =>
+                        `<option value="${l.id}" ${card.lead === l.id ? 'selected' : ''}>${l.name}</option>`
+                    ).join('');
+
+                    unit.innerHTML = `
+                        <div class="flex flex-wrap items-center justify-between gap-2 pb-3 mb-3 border-b ${card.owned ? 'border-gold-400/50' : 'border-stone-300'}">
+                            <div class="flex items-center gap-2 flex-1 min-w-[200px]">
+                                <select onchange="updateDualCardLead('${card.id}', this.value)"
+                                    class="text-xs font-serif font-bold text-white rounded-lg px-2 py-1 cursor-pointer focus:outline-none shadow-2xs"
+                                    style="background:${leadMeta.color}; border:1px solid ${leadMeta.border};"
+                                    title="点击切换该画灵所属男主">
+                                    ${leadOptionsHtml}
+                                </select>
+
+                                <input type="text" value="${escapeHtml(card.name)}"
+                                    onchange="updateDualCardName('${card.id}', this.value)"
+                                    placeholder="输入画灵卡名（如：时融）"
+                                    class="font-serif font-bold text-sm sm:text-base text-ink-900 bg-transparent border-b border-transparent hover:border-gold-400 focus:border-gold-600 focus:outline-none w-full min-w-0"
+                                    title="点击可直接修改画灵名称">
+                            </div>
+
+                            <div class="flex items-center gap-2 ml-auto">
+                                <button onclick="toggleDualCardOwned('${card.id}')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition shadow-xs flex items-center gap-1.5 ${
+                                    card.owned
+                                        ? 'bg-gradient-to-r from-amber-500 to-gold-600 text-white border border-gold-300 hover:brightness-105'
+                                        : 'bg-white hover:bg-amber-50 text-ink-700 border border-stone-300'
+                                }">
+                                    <i class="fa-solid ${card.owned ? 'fa-star text-yellow-200' : 'fa-regular fa-circle'}"></i>
+                                    <span>${card.owned ? '★ 已拥有该画灵' : '未拥有（点击点亮）'}</span>
+                                </button>
+                                <button onclick="deleteDualCard('${card.id}')" class="w-8 h-8 rounded-xl bg-cream-200/80 hover:bg-red-500 hover:text-white text-ink-500 text-xs transition flex items-center justify-center" title="删除这张画灵">
+                                    <i class="fa-regular fa-trash-can"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                            <!-- 左槽位：一段卡面（突破前） -->
+                            <div class="group relative rounded-xl overflow-hidden border ${card.owned ? 'border-gold-400/70' : 'border-stone-300'} bg-[#15192d]">
+                                <div class="relative w-full ${aspectClass} overflow-hidden">
+                                    <img src="${card.img1}" alt="一段卡面" onclick="previewStageImage('${card.id}', 1)" class="cursor-pointer w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${card.owned ? '' : 'grayscale-[40%] brightness-80'}">
+                                    <span class="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-md bg-black/70 backdrop-blur-xs text-gold-300 border border-gold-400/40 text-[11px] font-serif font-semibold">
+                                        一段卡面 · 突破前
+                                    </span>
+                                    <div class="absolute bottom-2.5 right-2.5 flex items-center gap-1.5">
+                                        <button onclick="previewStageImage('${card.id}', 1)" class="px-2 py-1 rounded-lg bg-black/70 hover:bg-black text-white text-[11px] backdrop-blur-xs flex items-center gap-1">
+                                            <i class="fa-solid fa-expand text-[10px]"></i>
+                                            <span>大图</span>
+                                        </button>
+                                        <button onclick="triggerReplaceCardSlot('${card.id}', 1)" class="px-2.5 py-1 rounded-lg bg-black/75 hover:bg-gold-500 hover:text-ink-900 text-gold-300 text-[11px] font-medium backdrop-blur-xs border border-gold-400/30 transition flex items-center gap-1">
+                                            <i class="fa-solid fa-camera text-[10px]"></i>
+                                            <span>上传/换一段图</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 右槽位：二段卡面（突破后） -->
+                            <div class="group relative rounded-xl overflow-hidden border ${card.owned ? 'border-gold-400/70' : 'border-stone-300'} bg-[#15192d]">
+                                <div class="relative w-full ${aspectClass} overflow-hidden">
+                                    <img src="${card.img2}" alt="二段卡面" onclick="previewStageImage('${card.id}', 2)" class="cursor-pointer w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 ${card.owned ? '' : 'grayscale-[40%] brightness-80'}">
+                                    <span class="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-md bg-black/70 backdrop-blur-xs text-amber-300 border border-amber-400/40 text-[11px] font-serif font-semibold">
+                                        二段卡面 · 突破后
+                                    </span>
+                                    <div class="absolute bottom-2.5 right-2.5 flex items-center gap-1.5">
+                                        <button onclick="previewStageImage('${card.id}', 2)" class="px-2 py-1 rounded-lg bg-black/70 hover:bg-black text-white text-[11px] backdrop-blur-xs flex items-center gap-1">
+                                            <i class="fa-solid fa-expand text-[10px]"></i>
+                                            <span>大图</span>
+                                        </button>
+                                        <button onclick="triggerReplaceCardSlot('${card.id}', 2)" class="px-2.5 py-1 rounded-lg bg-black/75 hover:bg-gold-500 hover:text-ink-900 text-gold-300 text-[11px] font-medium backdrop-blur-xs border border-gold-400/30 transition flex items-center gap-1">
+                                            <i class="fa-solid fa-camera text-[10px]"></i>
+                                            <span>上传/换二段图</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                    gridContainer.appendChild(unit);
+                });
+            }
+
+            // 3. 渲染下方 6 行资源与氪金统计账单
+            renderSixRowResourceLedger(ev);
+        }
+
+        function renderSixRowResourceLedger(ev) {
+            const container = document.getElementById('eventResourceLedgerContainer');
+            if (!container) return;
+
+            container.innerHTML = `
+                <div class="flex flex-wrap items-center justify-between gap-2 pb-3.5 mb-4 border-b border-gold-400/30">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-book-journal-whills text-gold-400 text-base"></i>
+                        <h4 class="font-serif font-bold text-base sm:text-lg text-gold-300">本期活动资源与氪金统计</h4>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="autoCalculateRemainingResources()" class="text-xs px-3 py-1.5 rounded-xl bg-gold-500/20 hover:bg-gold-500/35 text-gold-300 border border-gold-400/50 transition flex items-center gap-1.5" title="用【第5行总资源】减去【第1、2行已使用颜料和钻石】，自动算出第6行剩余资源">
+                            <i class="fa-solid fa-calculator"></i>
+                            <span>一键自动算剩余资源</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="space-y-3 text-sm">
+                    <!-- 第 1 行：已使用颜料：多少个 -->
+                    <div class="flex flex-wrap items-center justify-between gap-2 p-3 rounded-xl bg-white/5 border border-gold-400/25 hover:border-gold-400/50 transition">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-lg bg-pink-500/20 border border-pink-400/40 text-pink-300 flex items-center justify-center text-xs font-bold">1</span>
+                            <span class="font-serif font-bold text-cream-50">已使用颜料：</span>
+                        </div>
+                        <div class="flex items-center gap-2 ml-auto">
+                            <button onclick="stepCurrentEventResource('usedPigment', -1)" class="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-bold flex items-center justify-center">-</button>
+                            <input type="text" value="${escapeHtml(ev.usedPigment)}"
+                                oninput="updateCurrentEventField('usedPigment', this.value)"
+                                class="w-24 text-center font-bold text-pink-300 bg-black/40 border border-pink-400/50 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-pink-400">
+                            <span class="text-xs text-cream-200/80">个</span>
+                            <button onclick="stepCurrentEventResource('usedPigment', 10)" class="px-2.5 h-7 rounded-lg bg-pink-500/20 hover:bg-pink-500/35 border border-pink-400/40 text-pink-200 text-xs font-semibold">+10</button>
+                        </div>
+                    </div>
+
+                    <!-- 第 2 行：已使用钻石：多少个 -->
+                    <div class="flex flex-wrap items-center justify-between gap-2 p-3 rounded-xl bg-white/5 border border-gold-400/25 hover:border-gold-400/50 transition">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-lg bg-sky-500/20 border border-sky-400/40 text-sky-300 flex items-center justify-center text-xs font-bold">2</span>
+                            <span class="font-serif font-bold text-cream-50">已使用钻石：</span>
+                        </div>
+                        <div class="flex items-center gap-2 ml-auto">
+                            <button onclick="stepCurrentEventResource('usedDiamond', -150)" class="px-2 h-7 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-bold">-150</button>
+                            <input type="text" value="${escapeHtml(ev.usedDiamond)}"
+                                oninput="updateCurrentEventField('usedDiamond', this.value)"
+                                class="w-24 text-center font-bold text-sky-300 bg-black/40 border border-sky-400/50 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-sky-400">
+                            <span class="text-xs text-cream-200/80">个</span>
+                            <button onclick="stepCurrentEventResource('usedDiamond', 1500)" class="px-2.5 h-7 rounded-lg bg-sky-500/20 hover:bg-sky-500/35 border border-sky-400/40 text-sky-200 text-xs font-semibold">+1500</button>
+                        </div>
+                    </div>
+
+                    <!-- 第 3 行：已氪金：多少元 -->
+                    <div class="flex flex-wrap items-center justify-between gap-2 p-3 rounded-xl bg-white/5 border border-gold-400/25 hover:border-gold-400/50 transition">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-lg bg-amber-500/20 border border-amber-400/40 text-amber-300 flex items-center justify-center text-xs font-bold">3</span>
+                            <span class="font-serif font-bold text-cream-50">已氪金：</span>
+                        </div>
+                        <div class="flex items-center gap-2 ml-auto">
+                            <input type="text" value="${escapeHtml(ev.moneySpent)}"
+                                oninput="updateCurrentEventField('moneySpent', this.value)"
+                                class="w-28 text-center font-bold text-amber-300 bg-black/40 border border-amber-400/50 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400">
+                            <span class="text-xs text-cream-200/80">元</span>
+                        </div>
+                    </div>
+
+                    <!-- 第 4 行：氪金后拥有资源：多少颜料 多少钻石 -->
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-3 rounded-xl bg-white/5 border border-gold-400/25 hover:border-gold-400/50 transition">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-lg bg-purple-500/20 border border-purple-400/40 text-purple-300 flex items-center justify-center text-xs font-bold flex-shrink-0">4</span>
+                            <span class="font-serif font-bold text-cream-50">氪金后拥有资源：</span>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-3 sm:ml-auto">
+                            <div class="flex items-center gap-1.5 bg-black/35 px-3 py-1.5 rounded-xl border border-pink-400/35">
+                                <input type="text" value="${escapeHtml(ev.afterTopupPigment)}"
+                                    oninput="updateCurrentEventField('afterTopupPigment', this.value)"
+                                    class="w-16 text-center font-bold text-pink-300 bg-transparent border-b border-pink-400/50 focus:outline-none">
+                                <span class="text-xs text-cream-100">颜料</span>
+                            </div>
+                            <div class="flex items-center gap-1.5 bg-black/35 px-3 py-1.5 rounded-xl border border-sky-400/35">
+                                <input type="text" value="${escapeHtml(ev.afterTopupDiamond)}"
+                                    oninput="updateCurrentEventField('afterTopupDiamond', this.value)"
+                                    class="w-20 text-center font-bold text-sky-300 bg-transparent border-b border-sky-400/50 focus:outline-none">
+                                <span class="text-xs text-cream-100">钻石</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 第 5 行：氪金所得资源 + 已有钻石颜料有多少 -->
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-3 rounded-xl bg-white/5 border border-gold-400/25 hover:border-gold-400/50 transition">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-lg bg-indigo-500/20 border border-indigo-400/40 text-indigo-300 flex items-center justify-center text-xs font-bold flex-shrink-0">5</span>
+                            <span class="font-serif font-bold text-cream-50">氪金所得资源 + 已有钻石颜料有多少：</span>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-3 sm:ml-auto">
+                            <div class="flex items-center gap-1.5 bg-black/35 px-3 py-1.5 rounded-xl border border-pink-400/35">
+                                <input id="inputTotalPigment" type="text" value="${escapeHtml(ev.totalAvailablePigment)}"
+                                    oninput="updateCurrentEventField('totalAvailablePigment', this.value)"
+                                    class="w-16 text-center font-bold text-pink-300 bg-transparent border-b border-pink-400/50 focus:outline-none">
+                                <span class="text-xs text-cream-100">颜料</span>
+                            </div>
+                            <div class="flex items-center gap-1.5 bg-black/35 px-3 py-1.5 rounded-xl border border-sky-400/35">
+                                <input id="inputTotalDiamond" type="text" value="${escapeHtml(ev.totalAvailableDiamond)}"
+                                    oninput="updateCurrentEventField('totalAvailableDiamond', this.value)"
+                                    class="w-20 text-center font-bold text-sky-300 bg-transparent border-b border-sky-400/50 focus:outline-none">
+                                <span class="text-xs text-cream-100">钻石</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 第 6 行：活动后剩余多少资源 -->
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 p-3.5 rounded-xl bg-gradient-to-r from-gold-500/20 via-amber-500/15 to-gold-500/20 border-2 border-gold-400/60">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-lg bg-gold-400 text-ink-900 flex items-center justify-center text-xs font-bold flex-shrink-0">6</span>
+                            <span class="font-serif font-bold text-gold-300 text-base">活动后剩余多少资源：</span>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2.5 md:ml-auto">
+                            <div class="flex items-center gap-1.5 bg-black/45 px-3 py-1.5 rounded-xl border border-gold-400/50">
+                                <span class="text-xs text-pink-300">剩余</span>
+                                <input id="inputRemainPigment" type="text" value="${escapeHtml(ev.remainingPigment)}"
+                                    oninput="updateCurrentEventField('remainingPigment', this.value)"
+                                    class="w-16 text-center font-bold text-cream-50 bg-transparent border-b border-gold-400/60 focus:outline-none">
+                                <span class="text-xs text-cream-100">颜料</span>
+                            </div>
+                            <div class="flex items-center gap-1.5 bg-black/45 px-3 py-1.5 rounded-xl border border-gold-400/50">
+                                <span class="text-xs text-sky-300">剩余</span>
+                                <input id="inputRemainDiamond" type="text" value="${escapeHtml(ev.remainingDiamond)}"
+                                    oninput="updateCurrentEventField('remainingDiamond', this.value)"
+                                    class="w-20 text-center font-bold text-cream-50 bg-transparent border-b border-gold-400/60 focus:outline-none">
+                                <span class="text-xs text-cream-100">钻石</span>
+                            </div>
+                            <input type="text" value="${escapeHtml(ev.remainingNote || '')}"
+                                oninput="updateCurrentEventField('remainingNote', this.value)"
+                                placeholder="可填备注(如礼包/累充)"
+                                class="w-full sm:w-40 text-xs text-cream-100 bg-black/30 border border-white/20 rounded-xl px-3 py-2 focus:outline-none focus:border-gold-400">
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        /* ============================================================================
+         * 八、双卡面画灵操作 & 6行资源更新函数
+         * ============================================================================ */
+        function toggleCardAspectMode() {
+            appData.cardAspectMode = appData.cardAspectMode === 'vertical' ? 'horizontal' : 'vertical';
+            saveDataToStorage();
+            renderEventDedicatedPage();
+            showToast(appData.cardAspectMode === 'horizontal' ? '已切换为：横版卡面比例' : '已切换为：竖版卡面比例');
+        }
+
+        function toggleDualCardOwned(cardId) {
+            const ev = getCurrentEventObj();
+            if (!ev || !ev.cards) return;
+            const card = ev.cards.find(c => c.id === cardId);
+            if (!card) return;
+            card.owned = !card.owned;
+            saveDataToStorage();
+            renderEventDedicatedPage();
+            showToast(card.owned ? `★ 已点亮拥有画灵：「${card.name}」` : `已将「${card.name}」设为未拥有`);
+        }
+
+        function updateDualCardName(cardId, newName) {
+            const ev = getCurrentEventObj();
+            if (!ev || !ev.cards) return;
+            const card = ev.cards.find(c => c.id === cardId);
+            if (!card) return;
+            card.name = newName.trim() || '未命名画灵';
+            saveDataToStorage();
+            renderEventDedicatedPage();
+        }
+
+        function updateDualCardLead(cardId, newLead) {
+            const ev = getCurrentEventObj();
+            if (!ev || !ev.cards) return;
+            const card = ev.cards.find(c => c.id === cardId);
+            if (!card) return;
+            card.lead = newLead;
+            saveDataToStorage();
+            renderEventDedicatedPage();
+            showToast(`已将该画灵归属男主设为：${newLead}`);
+        }
+
+        function deleteDualCard(cardId) {
+            const ev = getCurrentEventObj();
+            if (!ev || !ev.cards) return;
+            const card = ev.cards.find(c => c.id === cardId);
+            openConfirmModal(
+                '删除画灵',
+                `确定要删除画灵「${card ? card.name : ''}」吗？`,
+                () => {
+                    ev.cards = ev.cards.filter(c => c.id !== cardId);
+                    saveDataToStorage();
+                    renderEventDedicatedPage();
+                    showToast('已删除该画灵');
+                }
+            );
+        }
+
+        function previewStageImage(cardId, stageSlot) {
+            const ev = getCurrentEventObj();
+            if (!ev || !ev.cards) return;
+            const card = ev.cards.find(c => c.id === cardId);
+            if (!card) return;
+            const imgSrc = stageSlot === 2 ? card.img2 : card.img1;
+            const stageName = stageSlot === 2 ? '二段卡面 · 突破后' : '一段卡面 · 突破前';
+            document.getElementById('lightboxImg').src = imgSrc;
+            document.getElementById('lightboxCaption').textContent = `${card.name} — ${stageName} (${card.owned ? '★ 已拥有' : '未拥有'})`;
+            document.getElementById('imageLightbox').classList.remove('hidden');
+        }
+
+        function triggerReplaceCardSlot(cardId, slot) {
+            uiState.replacingCardSlotInfo = { cardId, slot };
+            const input = document.getElementById('replaceCardFileInput');
+            input.value = '';
+            input.click();
+        }
+
+        async function handleDirectCardReplace(e) {
+            const file = e.target.files && e.target.files[0];
+            if (!file || !uiState.replacingCardSlotInfo) return;
+            try {
+                const dataUrl = await compressImageFile(file, 1100, 1100, 0.85);
+                const { cardId, slot } = uiState.replacingCardSlotInfo;
+                const ev = getCurrentEventObj();
+                if (ev && ev.cards) {
+                    const card = ev.cards.find(c => c.id === cardId);
+                    if (card) {
+                        if (slot === 2) card.img2 = dataUrl;
+                        else card.img1 = dataUrl;
+                        await saveDataToStorage();
+                        renderEventDedicatedPage();
+                        showToast(`${slot === 2 ? '二段' : '一段'}卡面图片已更新`);
+                    }
+                }
+            } catch (err) {
+                showToast('卡面图片读取失败', 'warning');
+            }
+        }
+
+        async function handleDirectBannerReplace(e) {
+            const file = e.target.files && e.target.files[0];
+            if (!file) return;
+            try {
+                const dataUrl = await compressImageFile(file, 1000, 750, 0.82);
+                const ev = getCurrentEventObj();
+                if (ev) {
+                    ev.banner = dataUrl;
+                    ev.isCustomBanner = true;
+                    await saveDataToStorage();
+                    renderEventDedicatedPage();
+                    showToast('活动图片已成功更换！');
+                }
+            } catch (err) {
+                showToast('图片读取失败，请尝试换一张图片', 'warning');
+            }
+        }
+
+        // 更新6行资源字段
+        function updateCurrentEventField(fieldName, val) {
+            const ev = getCurrentEventObj();
+            if (!ev) return;
+            ev[fieldName] = val;
+            saveDataToStorage();
+        }
+
+        function stepCurrentEventResource(fieldName, delta) {
+            const ev = getCurrentEventObj();
+            if (!ev) return;
+            const currentVal = parseInt(ev[fieldName], 10) || 0;
+            ev[fieldName] = String(Math.max(0, currentVal + delta));
+            saveDataToStorage();
+            renderSixRowResourceLedger(ev);
+        }
+
+        function autoCalculateRemainingResources() {
+            const ev = getCurrentEventObj();
+            if (!ev) return;
+            const totalPigment = parseInt(ev.totalAvailablePigment, 10) || parseInt(ev.afterTopupPigment, 10) || 0;
+            const totalDiamond = parseInt(ev.totalAvailableDiamond, 10) || parseInt(ev.afterTopupDiamond, 10) || 0;
+            const usedPigment = parseInt(ev.usedPigment, 10) || 0;
+            const usedDiamond = parseInt(ev.usedDiamond, 10) || 0;
+
+            ev.remainingPigment = String(Math.max(0, totalPigment - usedPigment));
+            ev.remainingDiamond = String(Math.max(0, totalDiamond - usedDiamond));
+            saveDataToStorage();
+            renderSixRowResourceLedger(ev);
+            showToast(`已自动算出剩余资源：${ev.remainingPigment} 颜料，${ev.remainingDiamond} 钻石`);
+        }
+
+        /* ============================================================================
+         * 九、年份弹窗、活动弹窗、新增双卡面画灵弹窗管理
+         * ============================================================================ */
+        function closeModal(modalId) {
+            const el = document.getElementById(modalId);
+            if (el) el.classList.add('hidden');
+        }
+
+        function openAddYearModal() {
+            const input = document.getElementById('newYearInput');
+            const maxYear = appData.years.length > 0 ? Math.max(...appData.years) : 2026;
+            if (input) input.value = maxYear + 1;
+            document.getElementById('addYearModal').classList.remove('hidden');
+        }
+
+        function confirmAddYear() {
+            const input = document.getElementById('newYearInput');
+            const y = parseInt(input.value, 10);
+            if (!y || y < 2015 || y > 2099) {
+                showToast('请输入有效的四位年份（2015~2099）', 'warning');
+                return;
+            }
+            if (!appData.years.includes(y)) {
+                appData.years.push(y);
+                appData.years.sort((a, b) => a - b);
+            }
+            uiState.selectedYear = y;
+            saveDataToStorage();
+            closeModal('addYearModal');
+            renderYearList();
+            renderMonthGrid();
+            showToast(`已添加并选中 ${y}年`);
+        }
+
+        function confirmDeleteYear(year) {
+            openConfirmModal(
+                '删除年份',
+                `确定要删除 ${year}年 及其名下的所有月份活动记录吗？`,
+                () => {
+                    appData.years = appData.years.filter(y => y !== year);
+                    for (let m = 1; m <= 12; m++) {
+                        delete appData.eventsByYearMonth[`${year}-${m}`];
+                    }
+                    if (uiState.selectedYear === year) {
+                        uiState.selectedYear = appData.years[0] || 2026;
+                    }
+                    saveDataToStorage();
+                    renderYearList();
+                    renderMonthGrid();
+                    showToast(`已删除 ${year}年`);
+                }
+            );
+        }
+
+        function renderModalLeadSelector() {
+            const container = document.getElementById('modalLeadSelectContainer');
+            if (!container) return;
+            const selected = uiState.modalSelectedLeads || ['叶瑄'];
+
+            container.innerHTML = MALE_LEADS.map(lead => {
+                const isSelected = selected.includes(lead.id);
+                return `<button type="button" onclick="toggleModalLeadSelection('${lead.id}')"
+                    class="py-2 px-2.5 rounded-xl text-xs font-serif font-bold transition flex items-center justify-center gap-1.5 shadow-2xs"
+                    style="${isSelected
+                        ? `background:${lead.color}; color:#fff; border:2px solid ${lead.border}; transform:scale(1.02);`
+                        : `background:#fff; color:#4a423d; border:1px solid rgba(200,155,72,0.45); opacity:0.85;`
+                    }">
+                    <i class="fa-solid ${isSelected ? 'fa-circle-check text-white' : 'fa-regular fa-circle text-stone-400'} text-[11px]"></i>
+                    <span>${lead.name}</span>
+                </button>`;
+            }).join('');
+        }
+
+        function toggleModalLeadSelection(leadId) {
+            let list = uiState.modalSelectedLeads || [];
+            if (list.includes(leadId)) {
+                if (list.length > 1) {
+                    list = list.filter(item => item !== leadId);
+                } else {
+                    showToast('请至少保留一位所属男主（多人活动可选“混池/多人”）');
+                    return;
+                }
+            } else {
+                list.push(leadId);
+            }
+            uiState.modalSelectedLeads = list;
+            renderModalLeadSelector();
+        }
+
+        function openEventModal(eventId = null) {
+            uiState.editingEventId = eventId;
+            modalTempBannerDataUrl = '';
+            document.getElementById('modalEventBannerInput').value = '';
+
+            const titleEl = document.getElementById('eventModalTitle');
+            const nameInput = document.getElementById('modalEventNameInput');
+            const startInput = document.getElementById('modalStartDayInput');
+            const endInput = document.getElementById('modalEndDayInput');
+            const preview = document.getElementById('modalBannerPreview');
+            const placeholder = document.getElementById('modalBannerPlaceholder');
+
+            if (eventId) {
+                const key = `${uiState.selectedYear}-${uiState.selectedMonth}`;
+                const ev = (appData.eventsByYearMonth[key] || []).find(item => item.id === eventId);
+                if (ev) {
+                    normalizeEventData(ev);
+                    titleEl.textContent = '修改活动信息';
+                    uiState.modalSelectedLeads = [...(ev.maleLeads || ['叶瑄'])];
+                    nameInput.value = ev.name || '';
+                    startInput.value = ev.startDate || '';
+                    endInput.value = ev.endDate || '';
+                    preview.src = ev.banner;
+                    preview.classList.remove('hidden');
+                    placeholder.classList.add('hidden');
+                }
+            } else {
+                titleEl.textContent = `添加 ${uiState.selectedMonth}月 新活动`;
+                const defaultLead = (uiState.monthPageLeadFilter && uiState.monthPageLeadFilter !== 'ALL')
+                    ? uiState.monthPageLeadFilter
+                    : '叶瑄';
+                uiState.modalSelectedLeads = [defaultLead];
+                nameInput.value = '';
+                startInput.value = `${uiState.selectedMonth}月1日`;
+                endInput.value = `${uiState.selectedMonth}月14日`;
+                preview.classList.add('hidden');
+                placeholder.classList.remove('hidden');
+            }
+
+            renderModalLeadSelector();
+            document.getElementById('eventModal').classList.remove('hidden');
+        }
+
+        function openEditCurrentEventModal() {
+            if (uiState.selectedEventId) {
+                openEventModal(uiState.selectedEventId);
+            }
+        }
+
+        async function handleModalBannerSelect(e) {
+            const file = e.target.files && e.target.files[0];
+            if (!file) return;
+            try {
+                modalTempBannerDataUrl = await compressImageFile(file, 1000, 750, 0.82);
+                const preview = document.getElementById('modalBannerPreview');
+                preview.src = modalTempBannerDataUrl;
+                preview.classList.remove('hidden');
+                document.getElementById('modalBannerPlaceholder').classList.add('hidden');
+                showToast('活动图片已就绪！');
+            } catch (err) {
+                showToast('图片读取失败，请尝试换一张图', 'warning');
+            }
+        }
+
+        function confirmSaveEvent() {
+            const name = document.getElementById('modalEventNameInput').value.trim();
+            const startDate = document.getElementById('modalStartDayInput').value.trim();
+            const endDate = document.getElementById('modalEndDayInput').value.trim();
+            const selectedLeads = (uiState.modalSelectedLeads && uiState.modalSelectedLeads.length > 0)
+                ? [...uiState.modalSelectedLeads]
+                : ['混池/多人'];
+
+            if (!name) {
+                showToast('请填写本期活动名称', 'warning');
+                return;
+            }
+            if (!startDate && !endDate) {
+                showToast('请填写活动日期（几号 - 几号）', 'warning');
+                return;
+            }
+
+            const key = `${uiState.selectedYear}-${uiState.selectedMonth}`;
+            if (!appData.eventsByYearMonth[key]) {
+                appData.eventsByYearMonth[key] = [];
+            }
+
+            const dateRangeStr = startDate && endDate ? `${startDate} - ${endDate}` : (startDate || endDate);
+
+            if (uiState.editingEventId) {
+                const ev = appData.eventsByYearMonth[key].find(item => item.id === uiState.editingEventId);
+                if (ev) {
+                    ev.name = name;
+                    ev.maleLeads = selectedLeads;
+                    ev.startDate = startDate;
+                    ev.endDate = endDate;
+                    if (modalTempBannerDataUrl) {
+                        ev.banner = modalTempBannerDataUrl;
+                        ev.isCustomBanner = true;
+                    } else if (!ev.isCustomBanner) {
+                        ev.banner = createSampleBannerSVG(name, dateRangeStr, selectedLeads[0]);
+                    }
+                }
+                saveDataToStorage();
+                closeModal('eventModal');
+                if (uiState.currentPage === 'EVENT_DETAIL') {
+                    renderEventDedicatedPage();
+                } else {
+                    renderMonthDedicatedPage();
+                }
+                showToast('活动信息已更新');
+            } else {
+                const newId = 'ev_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+                const hasCustom = Boolean(modalTempBannerDataUrl);
+                const bannerImg = modalTempBannerDataUrl || createSampleBannerSVG(name, dateRangeStr, selectedLeads[0]);
+
+                const newEv = {
+                    id: newId,
+                    name: name,
+                    maleLeads: selectedLeads,
+                    startDate: startDate,
+                    endDate: endDate,
+                    banner: bannerImg,
+                    isCustomBanner: hasCustom,
+                    usedPigment: '0',
+                    usedDiamond: '0',
+                    moneySpent: '0',
+                    afterTopupPigment: '0',
+                    afterTopupDiamond: '0',
+                    totalAvailablePigment: '0',
+                    totalAvailableDiamond: '0',
+                    remainingPigment: '0',
+                    remainingDiamond: '0',
+                    remainingNote: '',
+                    cards: []
+                };
+
+                appData.eventsByYearMonth[key].push(newEv);
+                if (uiState.monthPageLeadFilter !== 'ALL' && !selectedLeads.includes(uiState.monthPageLeadFilter)) {
+                    uiState.monthPageLeadFilter = 'ALL';
+                }
+                saveDataToStorage();
+                closeModal('eventModal');
+                renderMonthDedicatedPage();
+                showToast(`已添加【${selectedLeads.join('/')}】活动「${name}」`);
+            }
+        }
+
+        function confirmDeleteEvent(eventId) {
+            const key = `${uiState.selectedYear}-${uiState.selectedMonth}`;
+            const ev = (appData.eventsByYearMonth[key] || []).find(item => item.id === eventId);
+            if (!ev) return;
+            openConfirmModal(
+                '删除活动记录',
+                `确定要删除活动「${ev.name}」及其所有画灵与资源统计吗？`,
+                () => {
+                    appData.eventsByYearMonth[key] = (appData.eventsByYearMonth[key] || []).filter(item => item.id !== eventId);
+                    saveDataToStorage();
+                    renderMonthDedicatedPage();
+                    showToast('活动已删除');
+                }
+            );
+        }
+
+        // 打开新增双卡面画灵弹窗
+        function openAddCardModal() {
+            modalTempSlot1DataUrl = '';
+            modalTempSlot2DataUrl = '';
+            document.getElementById('modalBatchTwoInput').value = '';
+            document.getElementById('modalCardImg1Input').value = '';
+            document.getElementById('modalCardImg2Input').value = '';
+            document.getElementById('modalCardNameInput').value = '';
+            document.getElementById('modalCardOwnedSelect').value = 'true';
+
+            // 默认画灵男主跟随当前活动的第一个男主
+            const ev = getCurrentEventObj();
+            const defaultLead = (ev && Array.isArray(ev.maleLeads) && ev.maleLeads[0] && ev.maleLeads[0] !== '混池/多人')
+                ? ev.maleLeads[0]
+                : '叶瑄';
+            document.getElementById('modalCardLeadSelect').value = defaultLead;
+
+            document.getElementById('modalCardImg1Preview').classList.add('hidden');
+            document.getElementById('modalCardImg1Placeholder').classList.remove('hidden');
+            document.getElementById('modalCardImg2Preview').classList.add('hidden');
+            document.getElementById('modalCardImg2Placeholder').classList.remove('hidden');
+
+            document.getElementById('addCardModal').classList.remove('hidden');
+        }
+
+        // 单独选择一段(slot=1)或二段(slot=2)图片
+        async function handleSingleSlotSelect(e, slot) {
+            const file = e.target.files && e.target.files[0];
+            if (!file) return;
+            try {
+                const dataUrl = await compressImageFile(file, 1100, 1100, 0.85);
+                if (slot === 1) {
+                    modalTempSlot1DataUrl = dataUrl;
+                    const p1 = document.getElementById('modalCardImg1Preview');
+                    p1.src = dataUrl;
+                    p1.classList.remove('hidden');
+                    document.getElementById('modalCardImg1Placeholder').classList.add('hidden');
+                } else {
+                    modalTempSlot2DataUrl = dataUrl;
+                    const p2 = document.getElementById('modalCardImg2Preview');
+                    p2.src = dataUrl;
+                    p2.classList.remove('hidden');
+                    document.getElementById('modalCardImg2Placeholder').classList.add('hidden');
+                }
+            } catch (err) {
+                showToast('图片读取失败', 'warning');
+            }
+        }
+
+        // 一次选择2张图自动填入一段与二段
+        async function handleBatchTwoCardSelect(e) {
+            const files = Array.from(e.target.files || []);
+            if (files.length === 0) return;
+            try {
+                if (files[0]) {
+                    modalTempSlot1DataUrl = await compressImageFile(files[0], 1100, 1100, 0.85);
+                    const p1 = document.getElementById('modalCardImg1Preview');
+                    p1.src = modalTempSlot1DataUrl;
+                    p1.classList.remove('hidden');
+                    document.getElementById('modalCardImg1Placeholder').classList.add('hidden');
+                }
+                if (files[1]) {
+                    modalTempSlot2DataUrl = await compressImageFile(files[1], 1100, 1100, 0.85);
+                    const p2 = document.getElementById('modalCardImg2Preview');
+                    p2.src = modalTempSlot2DataUrl;
+                    p2.classList.remove('hidden');
+                    document.getElementById('modalCardImg2Placeholder').classList.add('hidden');
+                }
+                showToast(files.length >= 2 ? '已自动填入一段与二段卡面！' : '已填入一段卡面，您可继续点击右侧上传二段卡面');
+            } catch (err) {
+                showToast('图片处理失败', 'warning');
+            }
+        }
+
+        function confirmAddDualCard() {
+            const ev = getCurrentEventObj();
+            if (!ev) return;
+
+            if (!modalTempSlot1DataUrl && !modalTempSlot2DataUrl) {
+                showToast('请至少上传一张卡面图片（一段或二段）', 'warning');
+                return;
+            }
+
+            const cardLead = document.getElementById('modalCardLeadSelect').value || '叶瑄';
+            const rawName = document.getElementById('modalCardNameInput').value.trim();
+            const cardName = rawName || `本期画灵 #${(ev.cards ? ev.cards.length : 0) + 1}`;
+            const isOwned = document.getElementById('modalCardOwnedSelect').value === 'true';
+
+            const img1 = modalTempSlot1DataUrl || createSampleStageCardSVG(cardLead, cardName, '一段 · 突破前', '#1e3a5f', '#0f172a', '#38bdf8');
+            const img2 = modalTempSlot2DataUrl || createSampleStageCardSVG(cardLead, cardName, '二段 · 突破后', '#3b1d4a', '#141122', '#c084fc');
+
+            if (!ev.cards) ev.cards = [];
+            ev.cards.push({
+                id: 'card_dual_' + Date.now() + '_' + Math.random().toString(36).slice(2, 5),
+                lead: cardLead,
+                name: cardName,
+                img1: img1,
+                img2: img2,
+                owned: isOwned
+            });
+
+            saveDataToStorage();
+            closeModal('addCardModal');
+            renderEventDedicatedPage();
+            showToast(`已添加【${cardLead}】双卡面画灵「${cardName}」`);
+        }
+
+        /* ============================================================================
+         * 十、数据备份导出/导入 & 通用工具
+         * ============================================================================ */
+        function openBackupModal() {
+            document.getElementById('backupModal').classList.remove('hidden');
+        }
+
+        function exportBackupFile() {
+            const dataStr = JSON.stringify(appData, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const dateStr = new Date().toISOString().slice(0, 10);
+            a.href = url;
+            a.download = `绘旅人抽卡手账备份_${dateStr}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('备份文件已开始下载');
+        }
+
+        function importBackupFile(e) {
+            const file = e.target.files && e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async (ev) => {
+                try {
+                    const parsed = JSON.parse(ev.target.result);
+                    if (!parsed || !Array.isArray(parsed.years) || typeof parsed.eventsByYearMonth !== 'object') {
+                        showToast('备份文件格式不正确', 'warning');
+                        return;
+                    }
+                    appData = sanitizeAndMigrateData(parsed);
+                    await saveDataToStorage();
+                    closeModal('backupModal');
+                    switchPage('YEAR_MONTH');
+                    showToast('手账数据恢复成功！');
+                } catch (err) {
+                    showToast('解析备份文件失败', 'warning');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function resetToDefaultSample() {
+            openConfirmModal(
+                '恢复初始示例数据',
+                '这会将手账重置为包含2026年10月两个示例活动及双卡面画灵的初始状态，确定继续吗？',
+                async () => {
+                    appData = getDefaultAppData();
+                    uiState.selectedYear = 2026;
+                    uiState.selectedMonth = 10;
+                    await saveDataToStorage();
+                    switchPage('MONTH_DETAIL');
+                    showToast('已恢复初始示例数据');
+                }
+            );
+        }
+
+        function openConfirmModal(title, desc, onConfirm) {
+            document.getElementById('confirmModalTitle').textContent = title;
+            document.getElementById('confirmModalDesc').textContent = desc;
+            const okBtn = document.getElementById('confirmModalOkBtn');
+            okBtn.textContent = '确定';
+            okBtn.className = 'flex-1 py-2 rounded-xl text-xs font-semibold text-white bg-red-600 hover:bg-red-700 transition';
+            okBtn.onclick = () => {
+                closeModal('confirmModal');
+                if (typeof onConfirm === 'function') onConfirm();
+            };
+            document.getElementById('confirmModal').classList.remove('hidden');
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            const bgClass = type === 'warning'
+                ? 'bg-amber-900/95 border-amber-400 text-amber-100'
+                : 'bg-[#1b2038]/95 border-gold-400 text-gold-300';
+
+            toast.className = `px-4 py-2.5 rounded-2xl border shadow-xl text-xs font-medium flex items-center gap-2 backdrop-blur-md animate-reveal ${bgClass}`;
+            toast.innerHTML = `
+                <i class="fa-solid ${type === 'warning' ? 'fa-circle-exclamation text-amber-400' : 'fa-sparkles text-gold-400'}"></i>
+                <span>${escapeHtml(message)}</span>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 2600);
+        }
+
+        function escapeHtml(str) {
+            return String(str ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        // 页面初始化加载（非阻塞式加载，确保图标随时一点即进）
+        window.addEventListener('DOMContentLoaded', () => {
+            updateIconBadgeCount();
+            loadDataFromStorage().catch(() => {});
+        });
+    </script>
+</body>
+</html>
